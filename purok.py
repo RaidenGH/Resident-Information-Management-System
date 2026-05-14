@@ -8,12 +8,18 @@ def run_purok_window():
 
     root = tk.Tk()
     root.title("Select Purok")
-    root.geometry("400x300")
+    root.geometry("500x400")
+
+    # Configure grid expansion
+    root.grid_rowconfigure(0, weight=1)
+    root.grid_rowconfigure(1, weight=1)
+    root.grid_rowconfigure(2, weight=1)
+    root.grid_columnconfigure(0, weight=1)
 
     tree = ttk.Treeview(root, columns=("ID", "Name"), show="headings")
     tree.heading("ID", text="ID")
     tree.heading("Name", text="Purok Name")
-    tree.pack(pady=10)
+    tree.grid(row=0, column=0, sticky="nsew", padx=10, pady=10)
 
     def refresh_puroks():
         for row in tree.get_children():
@@ -40,9 +46,9 @@ def run_purok_window():
         ui.run_app(purok_id, purok_name)
 
     purok_entry = tk.Entry(root)
-    purok_entry.pack(pady=5)
-    tk.Button(root, text="Add Purok", command=add_purok).pack(pady=5)
-    tk.Button(root, text="Open Residents", command=open_residents).pack(pady=5)
+    purok_entry.grid(row=1, column=0, sticky="ew", padx=10, pady=5)
+    tk.Button(root, text="Add Purok", command=add_purok).grid(row=2, column=0, sticky="ew", padx=10, pady=5)
+    tk.Button(root, text="Open Residents", command=open_residents).grid(row=3, column=0, sticky="ew", padx=10, pady=5)
 
     refresh_puroks()
     root.mainloop()
