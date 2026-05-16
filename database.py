@@ -54,6 +54,14 @@ def get_puroks():
     conn.close()
     return rows
 
+def count_puroks():
+    conn = connect_db()
+    cursor = conn.cursor()
+    cursor.execute("SELECT COUNT(*) FROM puroks")
+    total = cursor.fetchone()[0]
+    conn.close()
+    return total
+
 # --- Resident functions ---
 def add_resident(first_name, last_name, age, contact, purok_id):
     conn = connect_db()
@@ -94,3 +102,11 @@ def get_residents_by_purok(purok_id):
     rows = cursor.fetchall()
     conn.close()
     return rows
+
+def count_residents():
+    conn = connect_db()
+    cursor = conn.cursor()
+    cursor.execute("SELECT COUNT(*) FROM residents")
+    total = cursor.fetchone()[0]
+    conn.close()
+    return total
