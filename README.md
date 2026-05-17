@@ -142,4 +142,5 @@ The output will be in the `dist/` folder as `RIMS.exe`.
 This project is for academic and local government use.  
 © Barangay Management System · v1.0
 
-![Project Structure](images/rims_project_structure.png)
+<img width="1200" height="900" alt="rims_project_structure" src="https://github.com/user-attachments/assets/48a20d7c-7b2f-4c1c-ab25-65add4f586e5" />
+
