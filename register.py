@@ -1,36 +1,36 @@
 import tkinter as tk
 from tkinter import messagebox
 import users_database
+from logo import make_logo_canvas
 
 
 def run_register(return_to_login):
     users_database.create_users_table()
 
     # ── Palette ──────────────────────────────────────────────────────────────
-    BG        = "#0d0f14"   # near-black canvas
-    CARD      = "#13161e"   # card surface
-    PANEL     = "#1a1e2b"   # input background
-    BORDER    = "#2a2f42"   # subtle divider
-    ACCENT    = "#4f8ef7"   # electric blue
-    ACCENT2   = "#7c5cfc"   # violet secondary
-    TEXT      = "#e8ecf4"   # primary text
-    MUTED     = "#6b7490"   # secondary text
-    SUCCESS   = "#4fc97e"   # green confirm
-    DANGER    = "#f74f6a"   # error red
+    BG        = "#0d0f14"
+    CARD      = "#13161e"
+    PANEL     = "#1a1e2b"
+    BORDER    = "#2a2f42"
+    ACCENT    = "#4f8ef7"
+    ACCENT2   = "#7c5cfc"
+    TEXT      = "#e8ecf4"
+    MUTED     = "#6b7490"
+    SUCCESS   = "#4fc97e"
+    DANGER    = "#f74f6a"
 
     # ── Root window ──────────────────────────────────────────────────────────
     root = tk.Tk()
     root.title("Create Account")
     root.configure(bg=BG)
-    root.geometry("460x660")
-    root.minsize(420, 580)
+    root.geometry("460x780")
+    root.minsize(420, 680)
     root.resizable(True, True)
 
-    # Center window on screen
     root.update_idletasks()
     x = (root.winfo_screenwidth() - 460) // 2
-    y = (root.winfo_screenheight() - 660) // 2
-    root.geometry(f"460x660+{x}+{y}")
+    y = (root.winfo_screenheight() - 780) // 2
+    root.geometry(f"460x780+{x}+{y}")
 
     # ── Scrollable canvas ────────────────────────────────────────────────────
     canvas = tk.Canvas(root, bg=BG, highlightthickness=0)
@@ -46,7 +46,6 @@ def run_register(return_to_login):
     window_id = canvas.create_window((0, 0), window=scroll_frame, anchor="nw")
     canvas.configure(yscrollcommand=scrollbar.set)
 
-    # Stretch scroll_frame to match canvas width whenever window resizes
     def _on_canvas_resize(event):
         canvas.itemconfig(window_id, width=event.width)
     canvas.bind("<Configure>", _on_canvas_resize)
@@ -58,43 +57,34 @@ def run_register(return_to_login):
         canvas.yview_scroll(int(-1 * (event.delta / 120)), "units")
     canvas.bind_all("<MouseWheel>", _on_mousewheel)
 
-    # ── Accent bar at top ────────────────────────────────────────────────────
-    accent_bar = tk.Frame(scroll_frame, bg=ACCENT, height=3)
-    accent_bar.pack(fill="x")
+    # ── Top accent stripe ─────────────────────────────────────────────────────
+    tk.Frame(scroll_frame, bg=ACCENT, height=3).pack(fill="x")
 
-    # ── Logo / brand mark ────────────────────────────────────────────────────
-    brand_frame = tk.Frame(scroll_frame, bg=BG)
-    brand_frame.pack(pady=(28, 0), padx=36, anchor="w")
+    # ── RIMS Logo ─────────────────────────────────────────────────────────────
+    logo_outer = tk.Frame(scroll_frame, bg=BG)
+    logo_outer.pack(fill="x", padx=20, pady=(20, 0))
 
-    # Decorative dot cluster
-    dot_canvas = tk.Canvas(brand_frame, width=32, height=32,
-                           bg=BG, highlightthickness=0)
-    dot_canvas.pack(side="left", padx=(0, 10))
-    dot_canvas.create_oval(0, 0, 14, 14, fill=ACCENT, outline="")
-    dot_canvas.create_oval(18, 0, 32, 14, fill=ACCENT2, outline="")
-    dot_canvas.create_oval(9, 18, 23, 32, fill=SUCCESS, outline="")
+    logo_c = make_logo_canvas(logo_outer, scale=0.62, bg=BG)
+    logo_c.pack(anchor="w")
 
-    tk.Label(brand_frame, text="BRGY",
-             font=("Courier", 11, "bold"),
-             fg=ACCENT, bg=BG).pack(side="left")
-    tk.Label(brand_frame, text=" SYSTEM",
-             font=("Courier", 11),
-             fg=MUTED, bg=BG).pack(side="left")
+    # Thin separator under logo
+    tk.Frame(scroll_frame, bg=BORDER, height=1).pack(
+        fill="x", padx=26, pady=(10, 0))
 
     # ── Heading ──────────────────────────────────────────────────────────────
     heading_frame = tk.Frame(scroll_frame, bg=BG)
-    heading_frame.pack(pady=(18, 2), padx=36, anchor="w")
+    heading_frame.pack(pady=(16, 2), padx=36, anchor="w")
 
     tk.Label(heading_frame, text="Create",
-             font=("Georgia", 26, "bold"),
+             font=("Georgia", 24, "bold"),
              fg=TEXT, bg=BG).pack(side="left")
     tk.Label(heading_frame, text=" Account",
-             font=("Georgia", 26, "italic"),
+             font=("Georgia", 24, "italic"),
              fg=ACCENT, bg=BG).pack(side="left")
 
     tk.Label(scroll_frame, text="Fill in your details below to get started",
              font=("Courier", 9),
-             fg=MUTED, bg=BG).pack(anchor="w", padx=36, pady=(0, 20))
+             fg=MUTED, bg=BG).pack(anchor="w", padx=36, pady=(0, 16))
 
     # ── Card container ───────────────────────────────────────────────────────
     card = tk.Frame(scroll_frame, bg=CARD,
@@ -136,33 +126,26 @@ def run_register(return_to_login):
                          bd=0)
         entry.pack(fill="x", padx=10, pady=7)
 
-        # Focus glow effect
-        def on_focus_in(e):
-            inner.config(highlightbackground=ACCENT)
-        def on_focus_out(e):
-            inner.config(highlightbackground=BORDER)
-
-        entry.bind("<FocusIn>", on_focus_in)
+        def on_focus_in(e):  inner.config(highlightbackground=ACCENT)
+        def on_focus_out(e): inner.config(highlightbackground=BORDER)
+        entry.bind("<FocusIn>",  on_focus_in)
         entry.bind("<FocusOut>", on_focus_out)
 
         entries[key] = entry
 
-    # ── Personal info section ────────────────────────────────────────────────
+    # ── Sections ─────────────────────────────────────────────────────────────
     section_label(card, "PERSONAL INFO")
     make_entry(card, "First Name")
     make_entry(card, "Last Name")
 
-    # ── Contact section ──────────────────────────────────────────────────────
     section_label(card, "CONTACT")
     make_entry(card, "Email")
     make_entry(card, "Phone")
 
-    # ── Credentials section ──────────────────────────────────────────────────
     section_label(card, "CREDENTIALS")
     make_entry(card, "Username")
     make_entry(card, "Password", show="●")
 
-    # ── Role section ─────────────────────────────────────────────────────────
     section_label(card, "ROLE")
 
     role_wrap = tk.Frame(card, bg=CARD)
@@ -198,10 +181,9 @@ def run_register(return_to_login):
     )
     role_dropdown.pack(fill="x", padx=4, pady=3)
 
-    # Bottom card padding
     tk.Frame(card, bg=CARD, height=10).pack()
 
-    # ── Action ───────────────────────────────────────────────────────────────
+    # ── Actions ──────────────────────────────────────────────────────────────
     def create_account():
         first_name = entries["First Name"].get().strip()
         last_name  = entries["Last Name"].get().strip()
@@ -238,7 +220,6 @@ def run_register(return_to_login):
     btn_area = tk.Frame(scroll_frame, bg=BG)
     btn_area.pack(padx=26, pady=18, fill="x")
 
-    # Primary button
     create_btn = tk.Button(
         btn_area,
         text="CREATE ACCOUNT  →",
@@ -252,11 +233,13 @@ def run_register(return_to_login):
     )
     create_btn.pack(fill="x", ipady=10)
 
-    # Divider
-    div = tk.Frame(btn_area, bg=BORDER, height=1)
-    div.pack(fill="x", pady=10)
+    def _cbtn_enter(e): create_btn.config(bg="#3a7ce8")
+    def _cbtn_leave(e): create_btn.config(bg=ACCENT)
+    create_btn.bind("<Enter>", _cbtn_enter)
+    create_btn.bind("<Leave>", _cbtn_leave)
 
-    # Ghost back button
+    tk.Frame(btn_area, bg=BORDER, height=1).pack(fill="x", pady=10)
+
     back_btn = tk.Button(
         btn_area,
         text="← Back to Login",
@@ -270,7 +253,6 @@ def run_register(return_to_login):
     )
     back_btn.pack(fill="x", ipady=6)
 
-    # Footer note
     tk.Label(scroll_frame,
              text="© Barangay Management System  ·  v1.0",
              font=("Courier", 7),
