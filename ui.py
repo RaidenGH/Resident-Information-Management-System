@@ -3,6 +3,7 @@ from tkinter import ttk, messagebox, filedialog
 import database
 import csv
 import purok
+from logo import make_logo_canvas
 
 
 def run_app(purok_id, purok_name):
@@ -24,13 +25,13 @@ def run_app(purok_id, purok_name):
     root = tk.Tk()
     root.title(f"Residents — {purok_name}")
     root.configure(bg=BG)
-    root.geometry("1060x660")
-    root.minsize(800, 520)
+    root.geometry("1060x680")
+    root.minsize(800, 540)
     root.resizable(True, True)
 
     root.update_idletasks()
     sw, sh = root.winfo_screenwidth(), root.winfo_screenheight()
-    root.geometry(f"1060x660+{(sw-1060)//2}+{(sh-660)//2}")
+    root.geometry(f"1060x680+{(sw-1060)//2}+{(sh-680)//2}")
 
     # Root grid: left sidebar | right main
     root.grid_rowconfigure(0, weight=1)
@@ -48,26 +49,18 @@ def run_app(purok_id, purok_name):
     # Top accent stripe
     tk.Frame(sidebar, bg=ACCENT, height=3).grid(row=0, column=0, sticky="ew")
 
-    # Brand header
-    brand = tk.Frame(sidebar, bg=CARD)
-    brand.grid(row=1, column=0, sticky="ew", padx=18, pady=(20, 4))
+    # ── Logo (from logo.py) ───────────────────────────────────────
+    logo_c = make_logo_canvas(sidebar, scale=0.52, bg=CARD)
+    logo_c.grid(row=1, column=0, sticky="ew", padx=10, pady=(14, 0))
 
-    dot_c = tk.Canvas(brand, width=24, height=24, bg=CARD, highlightthickness=0)
-    dot_c.pack(side="left", padx=(0, 8))
-    dot_c.create_oval(0,  0, 10, 10, fill=ACCENT,  outline="")
-    dot_c.create_oval(13, 0, 23, 10, fill=ACCENT2, outline="")
-    dot_c.create_oval(6, 13, 16, 23, fill=SUCCESS,  outline="")
-
-    hf = tk.Frame(brand, bg=CARD)
-    hf.pack(side="left")
-    tk.Label(hf, text="Residents", font=("Georgia", 13, "bold"),
-             fg=TEXT, bg=CARD).pack(anchor="w")
-    tk.Label(hf, text=purok_name,  font=("Courier", 8),
-             fg=ACCENT, bg=CARD).pack(anchor="w")
+    # Purok name badge under logo
+    tk.Label(sidebar, text=f"▸  {purok_name}",
+             font=("Courier", 8, "bold"),
+             fg=ACCENT, bg=CARD).grid(row=2, column=0, sticky="w", padx=18, pady=(2, 0))
 
     # Divider
     tk.Frame(sidebar, bg=BORDER, height=1).grid(
-        row=2, column=0, sticky="ew", padx=18, pady=(10, 0))
+        row=3, column=0, sticky="ew", padx=18, pady=(8, 0))
 
     # ── Form section label ────────────────────────────────────────
     def sidebar_section(row, text):
@@ -79,7 +72,7 @@ def run_app(purok_id, purok_name):
         tk.Frame(f, bg=BORDER, height=1).pack(
             side="left", fill="x", expand=True, padx=(6, 0), pady=5)
 
-    sidebar_section(3, "RESIDENT DETAILS")
+    sidebar_section(4, "RESIDENT DETAILS")
 
     # ── Entry factory ─────────────────────────────────────────────
     entries = {}
@@ -108,13 +101,13 @@ def run_app(purok_id, purok_name):
         e.bind("<FocusOut>", _out)
         entries[key] = e
 
-    make_sidebar_entry(4, "First Name")
-    make_sidebar_entry(5, "Last Name")
-    make_sidebar_entry(6, "Age")
-    make_sidebar_entry(7, "Contact")
+    make_sidebar_entry(5,  "First Name")
+    make_sidebar_entry(6,  "Last Name")
+    make_sidebar_entry(7,  "Age")
+    make_sidebar_entry(8,  "Contact")
 
     # ── Action buttons ────────────────────────────────────────────
-    sidebar_section(8, "ACTIONS")
+    sidebar_section(9, "ACTIONS")
 
     def make_btn(row, label, color, active_color, cmd, fg_color="white"):
         btn = tk.Button(sidebar, text=label, command=cmd,
@@ -174,22 +167,28 @@ def run_app(purok_id, purok_name):
         root.destroy()
         purok.run_purok_window()
 
-    make_btn(9,  "＋  Add Resident",    ACCENT,   "#3a7ce8", add_resident)
-    make_btn(10, "✎  Update Selected", WARN,     "#d9903a", update_resident, "#0d0f14")
-    make_btn(11, "✕  Delete Selected", DANGER,   "#d93a52", delete_resident)
+    def logout():
+        if messagebox.askyesno("Logout", "Are you sure you want to log out?"):
+            root.destroy()
+            import login
+            login.run_login()
+
+    make_btn(10, "＋  Add Resident",    ACCENT,   "#3a7ce8", add_resident)
+    make_btn(11, "✎  Update Selected", WARN,     "#d9903a", update_resident, "#0d0f14")
+    make_btn(12, "✕  Delete Selected", DANGER,   "#d93a52", delete_resident)
 
     tk.Frame(sidebar, bg=BORDER, height=1).grid(
-        row=12, column=0, sticky="ew", padx=18, pady=(12, 0))
+        row=13, column=0, sticky="ew", padx=18, pady=(12, 0))
 
-    make_btn(13, "← Back to Puroks", PANEL, BORDER, go_back, MUTED)
+    make_btn(14, "← Back to Puroks", PANEL, BORDER, go_back, MUTED)
 
     # Spacer
-    sidebar.grid_rowconfigure(14, weight=1)
+    sidebar.grid_rowconfigure(15, weight=1)
 
     # Footer
     tk.Label(sidebar, text="© BRGY System  v1.0",
              font=("Courier", 7), fg=BORDER, bg=CARD).grid(
-                 row=15, column=0, pady=(0, 10))
+                 row=16, column=0, pady=(0, 10))
 
     # ═══════════════════════════════════════════════════════════════
     # RIGHT MAIN PANEL
@@ -202,35 +201,21 @@ def run_app(purok_id, purok_name):
     # Top accent stripe
     tk.Frame(main, bg=ACCENT2, height=3).grid(row=0, column=0, sticky="ew")
 
-    # ── Toolbar row ───────────────────────────────────────────────
-    toolbar = tk.Frame(main, bg=BG)
-    toolbar.grid(row=1, column=0, sticky="ew", padx=20, pady=(14, 8))
-    toolbar.grid_columnconfigure(1, weight=1)
+    # ── Topbar: title + logout ────────────────────────────────────
+    topbar = tk.Frame(main, bg=BG)
+    topbar.grid(row=1, column=0, sticky="ew", padx=20, pady=(14, 8))
+    topbar.grid_columnconfigure(1, weight=1)
 
-    # Title
-    tf = tk.Frame(toolbar, bg=BG)
+    # Title (left)
+    tf = tk.Frame(topbar, bg=BG)
     tf.grid(row=0, column=0, sticky="w")
     tk.Label(tf, text="Resident", font=("Georgia", 18, "bold"),
              fg=TEXT, bg=BG).pack(side="left")
     tk.Label(tf, text=" Registry", font=("Georgia", 18, "italic"),
              fg=ACCENT, bg=BG).pack(side="left")
 
-    # Right-side toolbar buttons
-    tools = tk.Frame(toolbar, bg=BG)
-    tools.grid(row=0, column=2, sticky="e")
-
-    def make_tool_btn(parent, text, color, cmd):
-        b = tk.Button(parent, text=text, command=cmd,
-                      bg=PANEL, fg=color,
-                      activebackground=BORDER, activeforeground=color,
-                      font=("Courier", 8, "bold"),
-                      relief="flat", bd=0, cursor="hand2",
-                      highlightthickness=1, highlightbackground=BORDER)
-        b.pack(side="left", padx=3, ipady=5, ipadx=10)
-        return b
-
-    # ── Search bar ────────────────────────────────────────────────
-    search_wrap = tk.Frame(toolbar, bg=PANEL,
+    # Search bar (center)
+    search_wrap = tk.Frame(topbar, bg=PANEL,
                            highlightthickness=1, highlightbackground=BORDER)
     search_wrap.grid(row=0, column=1, sticky="ew", padx=(20, 12))
 
@@ -263,7 +248,20 @@ def run_app(purok_id, purok_name):
         refresh_table(query=q)
     search_var.trace_add("write", _on_search)
 
-    # Export / Import buttons
+    # ── Right-side: Export / Import + Logout ──────────────────────
+    right_tools = tk.Frame(topbar, bg=BG)
+    right_tools.grid(row=0, column=2, sticky="e")
+
+    def make_tool_btn(parent, text, color, cmd):
+        b = tk.Button(parent, text=text, command=cmd,
+                      bg=PANEL, fg=color,
+                      activebackground=BORDER, activeforeground=color,
+                      font=("Courier", 8, "bold"),
+                      relief="flat", bd=0, cursor="hand2",
+                      highlightthickness=1, highlightbackground=BORDER)
+        b.pack(side="left", padx=3, ipady=5, ipadx=10)
+        return b
+
     def export_csv():
         path = filedialog.asksaveasfilename(
             defaultextension=".csv",
@@ -305,17 +303,49 @@ def run_app(purok_id, purok_name):
         refresh_table()
         status_msg(f"Imported {added} records. ({skipped} skipped)", WARN)
 
-    make_tool_btn(tools, "⬆  Export CSV", SUCCESS, export_csv)
-    make_tool_btn(tools, "⬇  Import CSV", ACCENT,  import_csv)
+    make_tool_btn(right_tools, "⬆  Export CSV", SUCCESS, export_csv)
+    make_tool_btn(right_tools, "⬇  Import CSV", ACCENT,  import_csv)
+
+    # ── Logout button — top-right, styled as a glowing danger pill ──
+    logout_outer = tk.Frame(right_tools, bg="#3d0b14",
+                            highlightthickness=1, highlightbackground="#7a1a2e")
+    logout_outer.pack(side="left", padx=(10, 0))
+
+    logout_btn = tk.Button(
+        logout_outer,
+        text="⏻  LOG OUT",
+        command=logout,
+        bg="#1e0a10",
+        fg=DANGER,
+        activebackground="#3d0b14",
+        activeforeground="#ff8099",
+        font=("Courier", 8, "bold"),
+        relief="flat", bd=0,
+        cursor="hand2",
+        padx=12, pady=5,
+    )
+    logout_btn.pack()
+
+    # Pulse effect: subtly animate the border color on hover
+    def _logout_enter(e):
+        logout_outer.config(highlightbackground=DANGER)
+        logout_btn.config(bg="#2d0f1a", fg="#ff6b85")
+    def _logout_leave(e):
+        logout_outer.config(highlightbackground="#7a1a2e")
+        logout_btn.config(bg="#1e0a10", fg=DANGER)
+
+    logout_btn.bind("<Enter>", _logout_enter)
+    logout_btn.bind("<Leave>", _logout_leave)
+    logout_outer.bind("<Enter>", _logout_enter)
+    logout_outer.bind("<Leave>", _logout_leave)
 
     # ── Stats strip ───────────────────────────────────────────────
     stats_bar = tk.Frame(main, bg=CARD,
                          highlightthickness=1, highlightbackground=BORDER)
     stats_bar.grid(row=2, column=0, sticky="ew", padx=20, pady=(0, 8))
-    # (populated after table)
 
-    count_lbl  = tk.Label(stats_bar, text="",
-                          font=("Courier", 8), fg=MUTED, bg=CARD)
+    count_lbl = tk.Label(stats_bar, text="",
+                         font=("Courier", 8), fg=MUTED, bg=CARD)
     count_lbl.pack(side="left", padx=14, pady=5)
 
     status_lbl = tk.Label(stats_bar, text="",
@@ -369,16 +399,16 @@ def run_app(purok_id, purok_name):
                         yscrollcommand=vsb.set,
                         xscrollcommand=hsb.set)
 
-    col_widths = {"ID": 50, "First Name": 160, "Last Name": 160,
-                  "Age": 60, "Contact": 140}
-    col_anchor = {"ID": "center", "Age": "center"}
+    col_widths = {"ID": 55, "First Name": 180, "Last Name": 180,
+                  "Age": 70, "Contact": 160}
     for col in cols:
-        tree.heading(col, text=col,
+        tree.heading(col, text=col, anchor="center",
                      command=lambda c=col: sort_by(c))
         tree.column(col,
-                    width=col_widths.get(col, 130),
-                    anchor=col_anchor.get(col, "w"),
-                    stretch=(col == "Contact"))
+                    width=col_widths.get(col, 150),
+                    minwidth=col_widths.get(col, 60),
+                    anchor="center",
+                    stretch=True)
 
     tree.grid(row=0, column=0, sticky="nsew")
     vsb.config(command=tree.yview)

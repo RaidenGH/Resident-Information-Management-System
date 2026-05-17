@@ -1,6 +1,5 @@
 import tkinter as tk
 from tkinter import messagebox
-from PIL import Image, ImageTk
 import users_database
 import database
 from purok import run_purok_window
@@ -8,17 +7,11 @@ import register
 from datetime import datetime
 import platform
 
-# Windows-specific imports for taskbar fix
 if platform.system() == "Windows":
     import ctypes
-    from ctypes import wintypes
 
+# ── Windows taskbar helpers ───────────────────────────────────────────────────
 def _set_app_user_model_id(app_id: str):
-    """
-    Set an explicit AppUserModelID for the current process (Windows).
-    This helps Windows show the taskbar icon and group windows correctly.
-    Safe no-op on non-Windows platforms.
-    """
     if platform.system() != "Windows":
         return
     try:
@@ -27,222 +20,299 @@ def _set_app_user_model_id(app_id: str):
         pass
 
 def _ensure_taskbar_entry(win):
-    """
-    On Windows, a window created with overrideredirect(True) may not show in the taskbar.
-    This function adjusts the extended window style to include WS_EX_APPWINDOW and
-    remove WS_EX_TOOLWINDOW so the window appears in the taskbar.
-    Safe no-op on non-Windows platforms.
-    """
     if platform.system() != "Windows":
         return
-
     try:
-        GWL_EXSTYLE = -20
-        WS_EX_APPWINDOW = 0x00040000
+        GWL_EXSTYLE    = -20
+        WS_EX_APPWINDOW  = 0x00040000
         WS_EX_TOOLWINDOW = 0x00000080
-        SWP_NOSIZE = 0x0001
-        SWP_NOMOVE = 0x0002
-        SWP_NOZORDER = 0x0004
-        SWP_FRAMECHANGED = 0x0020
-
+        SWP_FLAGS = 0x0001 | 0x0002 | 0x0004 | 0x0020
         hwnd = win.winfo_id()
-        # Get current extended style
-        ex_style = ctypes.windll.user32.GetWindowLongW(hwnd, GWL_EXSTYLE)
-        # Add APPWINDOW, remove TOOLWINDOW
-        new_ex_style = (ex_style | WS_EX_APPWINDOW) & (~WS_EX_TOOLWINDOW)
-        ctypes.windll.user32.SetWindowLongW(hwnd, GWL_EXSTYLE, new_ex_style)
-        # Apply the style change so taskbar updates
-        ctypes.windll.user32.SetWindowPos(hwnd, 0, 0, 0, 0, 0,
-                                          SWP_NOMOVE | SWP_NOSIZE | SWP_NOZORDER | SWP_FRAMECHANGED)
+        ex   = ctypes.windll.user32.GetWindowLongW(hwnd, GWL_EXSTYLE)
+        ctypes.windll.user32.SetWindowLongW(hwnd, GWL_EXSTYLE,
+                                            (ex | WS_EX_APPWINDOW) & ~WS_EX_TOOLWINDOW)
+        ctypes.windll.user32.SetWindowPos(hwnd, 0, 0, 0, 0, 0, SWP_FLAGS)
     except Exception:
-        # Silently ignore errors so behavior remains unchanged on other systems
         pass
 
+
+# ── Palette — lighter but same theme ─────────────────────────────────────────
+BG      = "#1c2030"   # was #0d0f14 — now a visible navy-slate
+CARD    = "#252a3a"   # was #13161e — lifted noticeably
+PANEL   = "#2d3347"   # was #1a1e2b — much easier on entries
+BORDER  = "#4a5270"   # was #2a2f42 — borders now visible
+ACCENT  = "#5b9bff"   # slightly brighter blue
+ACCENT2 = "#9270ff"   # slightly brighter violet
+SUCCESS = "#52d98a"   # brighter green
+DANGER  = "#ff5c78"
+TEXT    = "#f0f4ff"   # near-white, crisper
+MUTED   = "#9ba8c8"   # was #6b7490 — much more readable muted text
+LABEL   = "#c8d0e8"   # new: for form labels, between MUTED and TEXT
+
+
+# ── Inline logo drawing ───────────────────────────────────────────────────────
+def _draw_logo(canvas, x=0, y=0, scale=1.0):
+    ox, oy = x, y
+    def s(v): return v * scale
+    def pt(px, py): return ox + s(px), oy + s(py)
+
+    outer = [ox+s(42), oy+s(0),  ox+s(84), oy+s(24),
+             ox+s(84), oy+s(72), ox+s(42), oy+s(96),
+             ox+s(0),  oy+s(72), ox+s(0),  oy+s(24)]
+    canvas.create_polygon(outer, fill="", outline=BORDER, width=max(1, int(1.5*scale)))
+
+    inner = [ox+s(42), oy+s(12), ox+s(76), oy+s(30),
+             ox+s(76), oy+s(66), ox+s(42), oy+s(84),
+             ox+s(8),  oy+s(66), ox+s(8),  oy+s(30)]
+    canvas.create_polygon(inner, fill=CARD, outline=BORDER, width=max(1, int(scale)))
+
+    for ly in [s(42), s(54), s(66)]:
+        canvas.create_line(ox+s(15), oy+ly, ox+s(69), oy+ly, fill=BORDER, width=1)
+
+    nodes = {
+        "top": pt(42, 30), "ml": pt(27, 24), "mr": pt(57, 24),
+        "cl":  pt(27, 54), "cr": pt(57, 54), "bot": pt(42, 66),
+    }
+    for a, b in [("ml","top"),("top","mr"),("ml","cl"),("mr","cr"),
+                 ("cl","bot"),("cr","bot"),("top","bot"),("cl","cr")]:
+        canvas.create_line(*nodes[a], *nodes[b], fill=BORDER, width=max(1, int(scale)))
+
+    def dot(k, col, r=5):
+        cx, cy = nodes[k]; r = s(r)
+        canvas.create_oval(cx-r, cy-r, cx+r, cy+r, fill=col, outline="")
+
+    dot("top", ACCENT, 5);  dot("ml", ACCENT, 3.5); dot("mr", ACCENT, 3.5)
+    dot("cl", ACCENT2, 3.5); dot("cr", ACCENT2, 3.5); dot("bot", SUCCESS, 5)
+
+    for px, py, col in [(84,24,ACCENT),(0,72,SUCCESS)]:
+        cx,cy = ox+s(px), oy+s(py); r=s(4)
+        canvas.create_oval(cx-r,cy-r,cx+r,cy+r, fill=col, outline="", stipple="gray50")
+
+    divx = ox + s(100)
+    canvas.create_line(divx, oy+s(4), divx, oy+s(92), fill=BORDER, width=1)
+
+    wx, wy = ox+s(112), oy+s(60)
+    fs = max(10, int(36*scale))
+    canvas.create_text(wx,                           wy, text="R",  font=("Georgia", fs, "bold"),        fill=TEXT,   anchor="w")
+    canvas.create_text(wx+int(fs*.68),               wy, text="I",  font=("Georgia", fs, "bold italic"),  fill=ACCENT, anchor="w")
+    canvas.create_text(wx+int(fs*.68)+int(fs*.38),   wy, text="MS", font=("Georgia", fs, "bold"),        fill=TEXT,   anchor="w")
+
+    canvas.create_line(wx, oy+s(68), wx+s(160), oy+s(68), fill=ACCENT, width=max(1,int(2*scale)))
+    canvas.create_text(wx, oy+s(80),
+                       text="RESIDENT INFORMATION MANAGEMENT SYSTEM",
+                       font=("Courier", max(7, int(8*scale))),
+                       fill=MUTED, anchor="w")
+
+
+# ── Main login window ─────────────────────────────────────────────────────────
 def run_login():
-    # Initialize both sets of tables
-    users_database.create_users_table()   # login accounts
-    database.create_tables()              # residents & puroks
+    users_database.create_users_table()
+    database.create_tables()
 
-    # On Windows, set an explicit AppUserModelID for proper taskbar behavior
     if platform.system() == "Windows":
-        _set_app_user_model_id("com.yourcompany.residentinfo")  # change string if you want a custom id
+        _set_app_user_model_id("com.rims.barangay")
 
+    WIN_W, WIN_H = 780, 540
     root = tk.Tk()
-    root.title("Resident Information Management System")
-    root.configure(bg="#1b1b1b")
+    root.title("RIMS — Login")
+    root.configure(bg=BG)
     root.resizable(False, False)
-
-    # --- Remove default window border (Steam style) ---
     root.overrideredirect(True)
 
-    # --- Center the window on screen ---
-    window_width, window_height = 700, 440
-    screen_width = root.winfo_screenwidth()
-    screen_height = root.winfo_screenheight()
-    x = (screen_width // 2) - (window_width // 2)
-    y = (screen_height // 2) - (window_height // 2)
-    root.geometry(f"{window_width}x{window_height}+{x}+{y}")
-
-    # Ensure geometry is applied before manipulating native window styles
+    sx, sy = root.winfo_screenwidth(), root.winfo_screenheight()
+    root.geometry(f"{WIN_W}x{WIN_H}+{(sx-WIN_W)//2}+{(sy-WIN_H)//2}")
     root.update_idletasks()
-
-    # --- Force taskbar visibility (Windows) ---
-    # Adjust native window styles so the borderless window still shows in the taskbar.
     _ensure_taskbar_entry(root)
 
-    # --- Soft border frame (3D look) ---
-    border_frame = tk.Frame(root, bg="#1b1b1b",
-                            highlightbackground="#d9d9d9",
-                            highlightthickness=3,
-                            relief="ridge")
-    border_frame.pack(fill="both", expand=True)
+    # ── Outer border shell ────────────────────────────────────────
+    shell = tk.Frame(root, bg=BG,
+                     highlightbackground=BORDER, highlightthickness=1)
+    shell.pack(fill="both", expand=True)
 
-    # --- Make window draggable by the border frame ---
-    def start_move(event):
-        # store the offset of the pointer relative to the window top-left
-        root._drag_start_x = event.x
-        root._drag_start_y = event.y
+    # Top accent stripe — two-tone
+    stripe = tk.Frame(shell, bg=ACCENT, height=3)
+    stripe.pack(fill="x")
 
-    def do_move(event):
-        # compute new top-left coordinates and move the window
-        dx = event.x - root._drag_start_x
-        dy = event.y - root._drag_start_y
-        new_x = root.winfo_x() + dx
-        new_y = root.winfo_y() + dy
-        root.geometry(f"+{new_x}+{new_y}")
+    # ── Title bar (draggable) ─────────────────────────────────────
+    titlebar = tk.Frame(shell, bg=CARD, height=36)
+    titlebar.pack(fill="x")
+    titlebar.pack_propagate(False)
 
-    border_frame.bind("<ButtonPress-1>", start_move)
-    border_frame.bind("<B1-Motion>", do_move)
+    tk.Label(titlebar, text="RIMS  ·  Barangay Edition",
+             font=("Courier", 9, "bold"), fg=MUTED, bg=CARD).pack(side="left", padx=14)
 
-    # --- Custom close button (inside window) ---
-    close_btn = tk.Button(border_frame, text="✕", command=root.destroy,
-                          bg="#1b1b1b", fg="white", font=("Arial", 12, "bold"),
-                          relief="flat", bd=0, activebackground="red", activeforeground="white",
-                          cursor="hand2")
-    close_btn.place(x=window_width - 30, y=5, width=25, height=25)
+    ctrl = tk.Frame(titlebar, bg=CARD)
+    ctrl.pack(side="right", padx=8, pady=6)
 
-    # --- Header ---
-    header_frame = tk.Frame(border_frame, bg="#1b1b1b")
-    header_frame.place(x=30, y=20)
+    def _min(): root.overrideredirect(False); root.iconify()
+    def _close(): root.destroy()
 
-    try:
-        icon_img = Image.open("images/hcdc_logo.png")
-        icon_img = icon_img.resize((40, 40), Image.LANCZOS)
-        icon = ImageTk.PhotoImage(icon_img)
-        lbl_icon = tk.Label(header_frame, image=icon, bg="#1b1b1b")
-        lbl_icon.image = icon
-        lbl_icon.pack(side="left", padx=(0, 10))
-    except Exception:
-        tk.Label(header_frame, text="🏠", font=("Arial", 24), fg="white", bg="#1b1b1b").pack(side="left", padx=(0, 10))
+    for sym, cmd, hov in [("─", _min, BORDER), ("✕", _close, DANGER)]:
+        b = tk.Button(ctrl, text=sym, command=cmd,
+                      bg=CARD, fg=MUTED,
+                      activebackground=hov, activeforeground=TEXT,
+                      font=("Courier", 10), relief="flat", bd=0,
+                      cursor="hand2", width=3)
+        b.pack(side="left", ipady=1)
 
-    tk.Label(header_frame, text="Resident Information Management System",
-             font=("Poppins", 16, "bold"), fg="white", bg="#1b1b1b").pack(side="left")
+    def _drag_start(e): root._dx, root._dy = e.x, e.y
+    def _drag_move(e):
+        root.geometry(f"+{root.winfo_x()+e.x-root._dx}+{root.winfo_y()+e.y-root._dy}")
+    titlebar.bind("<ButtonPress-1>", _drag_start)
+    titlebar.bind("<B1-Motion>",     _drag_move)
 
-    # --- Left login section ---
-    left_frame = tk.Frame(border_frame, bg="#1b1b1b")
-    left_frame.place(x=40, y=100)
+    # ── Body — two column layout ──────────────────────────────────
+    body = tk.Frame(shell, bg=BG)
+    body.pack(fill="both", expand=True)
 
-    tk.Label(left_frame, text="SIGN IN WITH ACCOUNT NAME",
-             font=("Poppins", 9, "bold"), fg="#00aaff", bg="#1b1b1b").pack(anchor="w")
+    # ── LEFT PANEL ────────────────────────────────────────────────
+    left = tk.Frame(body, bg=BG)
+    left.pack(side="left", fill="both", expand=True, padx=(36, 18), pady=20)
 
-    username_entry = tk.Entry(left_frame, bg="#2b2b2b", fg="white",
-                              font=("Poppins", 10), relief="flat", insertbackground="white")
-    username_entry.pack(anchor="w", pady=(5, 15), ipady=5, ipadx=150)
+    # Logo
+    logo_canvas = tk.Canvas(left, width=340, height=110,
+                            bg=BG, highlightthickness=0)
+    logo_canvas.pack(anchor="w")
+    _draw_logo(logo_canvas, x=0, y=8, scale=0.72)
 
-    tk.Label(left_frame, text="PASSWORD",
-             font=("Poppins", 9, "bold"), fg="#00aaff", bg="#1b1b1b").pack(anchor="w")
+    # Divider under logo
+    tk.Frame(left, bg=BORDER, height=1).pack(fill="x", pady=(10, 18))
 
-    password_entry = tk.Entry(left_frame, bg="#2b2b2b", fg="white",
-                              font=("Poppins", 10), show="*", relief="flat", insertbackground="white")
-    password_entry.pack(anchor="w", pady=(5, 10), ipady=5, ipadx=150)
+    # Section label
+    tk.Label(left, text="▸  SIGN IN TO YOUR ACCOUNT",
+             font=("Courier", 9, "bold"),
+             fg=ACCENT, bg=BG).pack(anchor="w", pady=(0, 14))
 
+    # ── Entry factory ─────────────────────────────────────────────
+    def make_entry(parent, label, show=None):
+        tk.Label(parent, text=label,
+                 font=("Courier", 9, "bold"),
+                 fg=LABEL, bg=BG).pack(anchor="w")
+
+        wrap = tk.Frame(parent, bg=PANEL,
+                        highlightthickness=1, highlightbackground=BORDER)
+        wrap.pack(fill="x", pady=(4, 14))
+
+        row = tk.Frame(wrap, bg=PANEL)
+        row.pack(fill="x", padx=10, pady=7)
+
+        # Icon prefix
+        icon = "👤" if label == "USERNAME" else "🔒"
+        tk.Label(row, text=icon, font=("Courier", 10),
+                 fg=MUTED, bg=PANEL).pack(side="left", padx=(0, 6))
+
+        e = tk.Entry(row, show=show, bg=PANEL, fg=TEXT,
+                     font=("Courier", 11), relief="flat",
+                     insertbackground=ACCENT, bd=0)
+        e.pack(side="left", fill="x", expand=True)
+
+        def _in(ev):  wrap.config(highlightbackground=ACCENT, bg="#333d57"); row.config(bg="#333d57"); e.config(bg="#333d57")
+        def _out(ev): wrap.config(highlightbackground=BORDER, bg=PANEL);     row.config(bg=PANEL);     e.config(bg=PANEL)
+        e.bind("<FocusIn>",  _in)
+        e.bind("<FocusOut>", _out)
+        return e
+
+    username_entry = make_entry(left, "USERNAME")
+    password_entry = make_entry(left, "PASSWORD", show="●")
+
+    # Remember me
     remember_var = tk.BooleanVar()
-    tk.Checkbutton(left_frame, text="Remember me", variable=remember_var,
-                   font=("Poppins", 9), fg="white", bg="#1b1b1b",
-                   activebackground="#1b1b1b", activeforeground="white",
-                   selectcolor="#1b1b1b").pack(anchor="w", pady=(5, 10))
+    rm = tk.Checkbutton(left, text="Remember me",
+                        variable=remember_var,
+                        font=("Courier", 9),
+                        fg=MUTED, bg=BG,
+                        activebackground=BG, activeforeground=TEXT,
+                        selectcolor=PANEL,
+                        relief="flat", bd=0)
+    rm.pack(anchor="w", pady=(0, 16))
 
-    # --- Hover animation ---
-    def on_hover(btn, color): btn.config(bg=color)
-    def on_leave(btn, color): btn.config(bg=color)
-
-    # Login button
+    # ── Login button ──────────────────────────────────────────────
     def login(event=None):
-        username = username_entry.get().strip()
-        password = password_entry.get().strip()
-        if not username or not password:
-            messagebox.showwarning("Error", "Please fill in both fields.")
+        u = username_entry.get().strip()
+        p = password_entry.get().strip()
+        if not u or not p:
+            messagebox.showwarning("Missing Fields", "Please fill in both fields.")
             return
-        if users_database.validate_login(username, password):
-            messagebox.showinfo("Login Successful", f"Welcome, {username}!")
+        if users_database.validate_login(u, p):
             root.destroy()
             run_purok_window()
         else:
             messagebox.showerror("Login Failed", "Invalid username or password.")
 
-    login_btn = tk.Button(left_frame, text="Sign in", command=login,
-                          bg="#00aaff", fg="white", font=("Poppins", 10, "bold"),
-                          activebackground="#33bbff", activeforeground="white",
+    login_btn = tk.Button(left, text="SIGN IN  →",
+                          command=login,
+                          bg=ACCENT, fg="white",
+                          activebackground="#3a7ce8", activeforeground="white",
+                          font=("Courier", 11, "bold"),
                           relief="flat", bd=0, cursor="hand2")
-    login_btn.pack(anchor="w", pady=(10, 10), ipadx=100, ipady=5)
-    login_btn.bind("<Enter>", lambda e: on_hover(login_btn, "#33bbff"))
-    login_btn.bind("<Leave>", lambda e: on_leave(login_btn, "#00aaff"))
+    login_btn.pack(fill="x", ipady=11)
 
-    # --- Right section: System Overview (live data + last sync date only) ---
-    right_frame = tk.Frame(border_frame, bg="#1b1b1b", highlightbackground="#2b2b2b", highlightthickness=1)
-    right_frame.place(x=420, y=100, width=230, height=220)
+    def _btn_enter(e): login_btn.config(bg="#4a8aee")
+    def _btn_leave(e): login_btn.config(bg=ACCENT)
+    login_btn.bind("<Enter>", _btn_enter)
+    login_btn.bind("<Leave>", _btn_leave)
 
-    tk.Label(right_frame, text="SYSTEM OVERVIEW",
-             font=("Poppins", 10, "bold"), fg="#00aaff", bg="#1b1b1b").pack(anchor="center", pady=(10, 5))
-
-    total_residents = database.count_residents()
-    total_puroks = database.count_puroks()
-    pending_updates = 0  # placeholder until you add update tracking
-    last_sync = datetime.now().strftime("%b %d, %Y")  # date only
-
-    overview_items = [
-        ("Total Residents", str(total_residents)),
-        ("Registered Puroks", str(total_puroks)),
-        ("Pending Updates", str(pending_updates)),
-        ("Last Sync", last_sync)
-    ]
-
-    for label, value in overview_items:
-        item_frame = tk.Frame(right_frame, bg="#1b1b1b")
-        item_frame.pack(anchor="w", pady=3, padx=20)
-        tk.Label(item_frame, text=f"{label}:", font=("Poppins", 9), fg="white", bg="#1b1b1b").pack(side="left")
-        tk.Label(item_frame, text=value, font=("Poppins", 9, "bold"), fg="#00aaff", bg="#1b1b1b").pack(side="left", padx=(5, 0))
-
-    # --- Footer ---
-    footer_frame = tk.Frame(border_frame, bg="#1b1b1b")
-    footer_frame.place(x=40, y=380)
-
-    tk.Label(footer_frame, text="Don't have an account?",
-             font=("Poppins", 9), fg="white", bg="#1b1b1b").pack(side="left")
-
-    create_btn = tk.Button(footer_frame, text="Create Account",
-                           command=lambda: [root.destroy(), register.run_register(run_login)],
-                           bg="#1b1b1b", fg="#00aaff", font=("Poppins", 9, "bold"),
-                           activebackground="#00aaff", activeforeground="white",
-                           relief="flat", bd=0, cursor="hand2")
-    create_btn.pack(side="left", padx=(5, 0))
-    create_btn.bind("<Enter>", lambda e: on_hover(create_btn, "#00aaff"))
-    create_btn.bind("<Leave>", lambda e: on_leave(create_btn, "#1b1b1b"))
-
-    # --- Debug: print and briefly display the native window handle (winfo_id) ---
-    try:
-        hwnd = root.winfo_id()
-        print(f"[DEBUG] Window handle (winfo_id): {hwnd}")
-        # Briefly show a small non-intrusive label with the hwnd so you can confirm the native handle
-        if platform.system() == "Windows":
-            debug_lbl = tk.Label(border_frame, text=f"hwnd: {hwnd}", font=("Poppins", 8),
-                                 fg="#bbbbbb", bg="#1b1b1b")
-            # place near bottom-right inside the window without altering main UI layout
-            debug_lbl.place(x=window_width - 180, y=window_height - 22)
-            # remove after 4 seconds
-            root.after(4000, debug_lbl.destroy)
-    except Exception:
-        pass
+    # Footer link
+    foot = tk.Frame(left, bg=BG)
+    foot.pack(anchor="w", pady=(14, 0))
+    tk.Label(foot, text="Don't have an account?",
+             font=("Courier", 9), fg=MUTED, bg=BG).pack(side="left")
+    tk.Button(foot, text="  Create Account →",
+              command=lambda: [root.destroy(), register.run_register(run_login)],
+              bg=BG, fg=ACCENT,
+              activebackground=BG, activeforeground=TEXT,
+              font=("Courier", 9, "bold"),
+              relief="flat", bd=0, cursor="hand2").pack(side="left")
 
     password_entry.bind("<Return>", login)
+
+    # ── RIGHT PANEL — system overview ─────────────────────────────
+    right = tk.Frame(body, bg=CARD, width=230,
+                     highlightthickness=1, highlightbackground=BORDER)
+    right.pack(side="right", fill="y", padx=(0, 28), pady=28)
+    right.pack_propagate(False)
+
+    tk.Frame(right, bg=ACCENT2, height=3).pack(fill="x")
+
+    tk.Label(right, text="▸  SYSTEM OVERVIEW",
+             font=("Courier", 8, "bold"),
+             fg=ACCENT, bg=CARD).pack(anchor="w", padx=16, pady=(14, 4))
+
+    tk.Frame(right, bg=BORDER, height=1).pack(fill="x", padx=16, pady=(0, 10))
+
+    total_residents = database.count_residents()
+    total_puroks    = database.count_puroks()
+    pending_updates = 0
+    last_sync       = datetime.now().strftime("%b %d, %Y")
+
+    stats = [
+        ("Total Residents",   str(total_residents), SUCCESS),
+        ("Registered Puroks", str(total_puroks),    ACCENT),
+        ("Pending Updates",   str(pending_updates), MUTED),
+        ("Last Sync",         last_sync,            MUTED),
+    ]
+
+    for label, value, val_color in stats:
+        row = tk.Frame(right, bg=PANEL,
+                       highlightthickness=1, highlightbackground=BORDER)
+        row.pack(fill="x", padx=14, pady=4)
+        tk.Label(row, text=label,
+                 font=("Courier", 8, "bold"),
+                 fg=LABEL, bg=PANEL).pack(anchor="w", padx=10, pady=(7, 0))
+        tk.Label(row, text=value,
+                 font=("Courier", 14, "bold"),
+                 fg=val_color, bg=PANEL).pack(anchor="w", padx=10, pady=(0, 7))
+
+    tk.Frame(right, bg=CARD).pack(fill="both", expand=True)
+
+    tk.Frame(right, bg=BORDER, height=1).pack(fill="x", padx=16)
+    tk.Label(right,
+             text="© Created by: Reynald & Arl",
+             font=("Courier", 7),
+             fg=MUTED, bg=CARD).pack(pady=10)
+
     root.mainloop()
+
+
+if __name__ == "__main__":
+    run_login()

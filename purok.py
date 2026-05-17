@@ -2,6 +2,7 @@ import tkinter as tk
 from tkinter import ttk, messagebox
 import database
 import ui
+from logo import make_logo_canvas
 
 
 def run_purok_window():
@@ -23,14 +24,14 @@ def run_purok_window():
     root = tk.Tk()
     root.title("Purok Management")
     root.configure(bg=BG)
-    root.geometry("560x620")
-    root.minsize(460, 500)
+    root.geometry("560x760")          # taller to accommodate the logo
+    root.minsize(460, 640)
     root.resizable(True, True)
 
     root.update_idletasks()
     x = (root.winfo_screenwidth()  - 560) // 2
-    y = (root.winfo_screenheight() - 620) // 2
-    root.geometry(f"560x620+{x}+{y}")
+    y = (root.winfo_screenheight() - 760) // 2
+    root.geometry(f"560x760+{x}+{y}")
 
     root.grid_rowconfigure(0, weight=1)
     root.grid_columnconfigure(0, weight=1)
@@ -38,16 +39,24 @@ def run_purok_window():
     # ── Outer wrapper fills window ────────────────────────────────────────────
     wrapper = tk.Frame(root, bg=BG)
     wrapper.grid(row=0, column=0, sticky="nsew")
-    wrapper.grid_rowconfigure(2, weight=1)   # table row expands
+    wrapper.grid_rowconfigure(3, weight=1)   # table row expands
     wrapper.grid_columnconfigure(0, weight=1)
 
     # ── Top accent stripe ─────────────────────────────────────────────────────
     tk.Frame(wrapper, bg=ACCENT, height=3).grid(
         row=0, column=0, sticky="ew")
 
+    # ── RIMS Logo ─────────────────────────────────────────────────────────────
+    logo_canvas = make_logo_canvas(wrapper, scale=0.75, bg=BG)
+    logo_canvas.grid(row=1, column=0, sticky="w", padx=26, pady=(16, 0))
+
+    # Thin separator under logo
+    tk.Frame(wrapper, bg=BORDER, height=1).grid(
+        row=2, column=0, sticky="ew", padx=26, pady=(12, 0))
+
     # ── Header ───────────────────────────────────────────────────────────────
     header = tk.Frame(wrapper, bg=BG)
-    header.grid(row=1, column=0, sticky="ew", padx=26, pady=(22, 10))
+    header.grid(row=3, column=0, sticky="ew", padx=26, pady=(16, 10))
     header.grid_columnconfigure(1, weight=1)
 
     # Dot cluster brand mark
@@ -74,7 +83,7 @@ def run_purok_window():
     # ── Treeview card ─────────────────────────────────────────────────────────
     tree_card = tk.Frame(wrapper, bg=CARD,
                          highlightthickness=1, highlightbackground=BORDER)
-    tree_card.grid(row=2, column=0, sticky="nsew", padx=26, pady=(0, 10))
+    tree_card.grid(row=4, column=0, sticky="nsew", padx=26, pady=(0, 10))
     tree_card.grid_rowconfigure(1, weight=1)
     tree_card.grid_columnconfigure(0, weight=1)
 
@@ -142,7 +151,7 @@ def run_purok_window():
     # ── Add Purok card ────────────────────────────────────────────────────────
     add_card = tk.Frame(wrapper, bg=CARD,
                         highlightthickness=1, highlightbackground=BORDER)
-    add_card.grid(row=3, column=0, sticky="ew", padx=26, pady=(0, 10))
+    add_card.grid(row=5, column=0, sticky="ew", padx=26, pady=(0, 10))
     add_card.grid_columnconfigure(0, weight=1)
 
     tk.Label(add_card, text="▸ ADD NEW PUROK",
@@ -190,14 +199,14 @@ def run_purok_window():
                          activebackground="#3ab868",
                          activeforeground="#0d0f14",
                          relief="flat", bd=0, cursor="hand2")
-    open_btn.grid(row=4, column=0, sticky="ew",
+    open_btn.grid(row=6, column=0, sticky="ew",
                   padx=26, pady=(0, 6), ipady=11)
 
     # Footer
     tk.Label(wrapper,
              text="© Barangay Management System  ·  v1.0",
              font=("Courier", 7),
-             fg=BORDER, bg=BG).grid(row=5, column=0, pady=(2, 10))
+             fg=BORDER, bg=BG).grid(row=7, column=0, pady=(2, 10))
 
     # ── Logic ─────────────────────────────────────────────────────────────────
     def refresh_puroks():
