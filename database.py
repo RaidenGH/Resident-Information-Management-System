@@ -1,112 +1,122 @@
 import sqlite3
 
-def connect_db():
-    return sqlite3.connect("residents.db")
+DB_NAME = "residents.db"
+
+
+def get_connection():
+    return sqlite3.connect(DB_NAME)
+
 
 def create_tables():
-    conn = connect_db()
-    cursor = conn.cursor()
-    cursor.execute("""
-        CREATE TABLE IF NOT EXISTS puroks (
-            id INTEGER PRIMARY KEY AUTOINCREMENT,
-            name TEXT NOT NULL
-        )
-    """)
-    cursor.execute("""
-        CREATE TABLE IF NOT EXISTS residents (
-            id INTEGER PRIMARY KEY AUTOINCREMENT,
-            first_name TEXT NOT NULL,
-            last_name TEXT NOT NULL,
-            age INTEGER,
-            contact TEXT,
-            purok_id INTEGER,
-            FOREIGN KEY (purok_id) REFERENCES puroks(id)
-        )
-    """)
-    conn.commit()
-    conn.close()
+    with get_connection() as conn:
+        conn.execute("""
+            CREATE TABLE IF NOT EXISTS puroks (
+                id   INTEGER PRIMARY KEY AUTOINCREMENT,
+                name TEXT NOT NULL UNIQUE
+            )
+        """)
+        conn.execute("""
+            CREATE TABLE IF NOT EXISTS residents (
+                id         INTEGER PRIMARY KEY AUTOINCREMENT,
+                first_name TEXT NOT NULL,
+                last_name  TEXT NOT NULL,
+                age        TEXT,
+                contact    TEXT,
+                purok_id   INTEGER,
+                gender     TEXT DEFAULT '',
+                birthdate  TEXT DEFAULT '',
+                status     TEXT DEFAULT 'Registered',
+                FOREIGN KEY (purok_id) REFERENCES puroks(id)
+            )
+        """)
+        # Migrate existing tables that may be missing the new columns
+        _migrate(conn)
+        conn.commit()
 
+
+def _migrate(conn):
+    """Add missing columns to residents table if upgrading from old schema."""
+    cursor = conn.execute("PRAGMA table_info(residents)")
+    existing = {row[1] for row in cursor.fetchall()}
+    if "gender" not in existing:
+        conn.execute("ALTER TABLE residents ADD COLUMN gender TEXT DEFAULT ''")
+    if "birthdate" not in existing:
+        conn.execute("ALTER TABLE residents ADD COLUMN birthdate TEXT DEFAULT ''")
+    if "status" not in existing:
+        conn.execute("ALTER TABLE residents ADD COLUMN status TEXT DEFAULT 'Registered'")
+
+
+# ── Puroks ────────────────────────────────────────────────────────────────────
 def create_purok_table():
-    conn = connect_db()
-    cursor = conn.cursor()
-    cursor.execute("""
-        CREATE TABLE IF NOT EXISTS puroks (
-            id INTEGER PRIMARY KEY AUTOINCREMENT,
-            name TEXT NOT NULL
-        )
-    """)
-    conn.commit()
-    conn.close()
+    create_tables()
 
-# --- Purok functions ---
+
 def add_purok(name):
-    conn = connect_db()
-    cursor = conn.cursor()
-    cursor.execute("INSERT INTO puroks (name) VALUES (?)", (name,))
-    conn.commit()
-    conn.close()
+    with get_connection() as conn:
+        conn.execute("INSERT INTO puroks (name) VALUES (?)", (name,))
+        conn.commit()
+
 
 def get_puroks():
-    conn = connect_db()
-    cursor = conn.cursor()
-    cursor.execute("SELECT id, name FROM puroks")
-    rows = cursor.fetchall()
-    conn.close()
-    return rows
+    with get_connection() as conn:
+        return conn.execute(
+            "SELECT id, name FROM puroks ORDER BY name"
+        ).fetchall()
+
 
 def count_puroks():
-    conn = connect_db()
-    cursor = conn.cursor()
-    cursor.execute("SELECT COUNT(*) FROM puroks")
-    total = cursor.fetchone()[0]
-    conn.close()
-    return total
+    with get_connection() as conn:
+        return conn.execute("SELECT COUNT(*) FROM puroks").fetchone()[0]
 
-# --- Resident functions ---
-def add_resident(first_name, last_name, age, contact, purok_id):
-    conn = connect_db()
-    cursor = conn.cursor()
-    cursor.execute("""
-        INSERT INTO residents (first_name, last_name, age, contact, purok_id)
-        VALUES (?, ?, ?, ?, ?)
-    """, (first_name, last_name, age, contact, purok_id))
-    conn.commit()
-    conn.close()
 
-def update_resident(resident_id, first_name, last_name, age, contact):
-    conn = connect_db()
-    cursor = conn.cursor()
-    cursor.execute("""
-        UPDATE residents
-        SET first_name=?, last_name=?, age=?, contact=?
-        WHERE id=?
-    """, (first_name, last_name, age, contact, resident_id))
-    conn.commit()
-    conn.close()
+# ── Residents ─────────────────────────────────────────────────────────────────
+def add_resident(first_name, last_name, age, contact, purok_id,
+                 birthdate="", gender="", status="Registered"):
+    with get_connection() as conn:
+        conn.execute("""
+            INSERT INTO residents
+                (first_name, last_name, age, contact, purok_id,
+                 gender, birthdate, status)
+            VALUES (?, ?, ?, ?, ?, ?, ?, ?)
+        """, (first_name, last_name, age, contact, purok_id,
+              gender, birthdate, status))
+        conn.commit()
+
+
+def update_resident(resident_id, first_name, last_name, age, contact,
+                    birthdate="", gender="", status="Registered"):
+    with get_connection() as conn:
+        conn.execute("""
+            UPDATE residents
+            SET first_name=?, last_name=?, age=?, contact=?,
+                gender=?, birthdate=?, status=?
+            WHERE id=?
+        """, (first_name, last_name, age, contact,
+              gender, birthdate, status, resident_id))
+        conn.commit()
+
 
 def delete_resident(resident_id):
-    conn = connect_db()
-    cursor = conn.cursor()
-    cursor.execute("DELETE FROM residents WHERE id=?", (resident_id,))
-    conn.commit()
-    conn.close()
+    with get_connection() as conn:
+        conn.execute("DELETE FROM residents WHERE id=?", (resident_id,))
+        conn.commit()
+
 
 def get_residents_by_purok(purok_id):
-    conn = connect_db()
-    cursor = conn.cursor()
-    cursor.execute("""
-        SELECT id, first_name, last_name, age, contact
-        FROM residents
-        WHERE purok_id=?
-    """, (purok_id,))
-    rows = cursor.fetchall()
-    conn.close()
-    return rows
+    """
+    Returns rows as:
+    (id, first_name, last_name, age, contact, purok_id, gender, birthdate, status)
+    """
+    with get_connection() as conn:
+        return conn.execute("""
+            SELECT id, first_name, last_name, age, contact, purok_id,
+                   gender, birthdate, status
+            FROM residents
+            WHERE purok_id=?
+            ORDER BY last_name, first_name
+        """, (purok_id,)).fetchall()
+
 
 def count_residents():
-    conn = connect_db()
-    cursor = conn.cursor()
-    cursor.execute("SELECT COUNT(*) FROM residents")
-    total = cursor.fetchone()[0]
-    conn.close()
-    return total
+    with get_connection() as conn:
+        return conn.execute("SELECT COUNT(*) FROM residents").fetchone()[0]
