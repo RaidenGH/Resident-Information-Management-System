@@ -6,6 +6,18 @@ import purok
 from logo import make_logo_canvas
 from datetime import date, datetime
 import calendar as cal
+import os
+
+from resident_info import open_resident_info
+from camera_capture import open_camera_window
+
+try:
+    from PIL import Image, ImageTk
+    PIL_OK = True
+except ImportError:
+    PIL_OK = False
+
+PHOTOS_DIR = "resident_photos"
 
 
 def run_app(purok_id, purok_name):
@@ -35,10 +47,13 @@ def run_app(purok_id, purok_name):
     root.grid_rowconfigure(0, weight=1)
     root.grid_columnconfigure(1, weight=1)
 
+    # Shared photo path for current registration
+    current_photo = {"path": ""}
+
     # ═══════════════════════════════════════════════════════════════
     # LEFT SIDEBAR
     # ═══════════════════════════════════════════════════════════════
-    sidebar = tk.Frame(root, bg=CARD, width=270,
+    sidebar = tk.Frame(root, bg=CARD, width=275,
                        highlightthickness=1, highlightbackground=BORDER)
     sidebar.grid(row=0, column=0, sticky="nsew")
     sidebar.grid_propagate(False)
@@ -58,7 +73,7 @@ def run_app(purok_id, purok_name):
 
     def sidebar_section(row, text):
         f = tk.Frame(sidebar, bg=CARD)
-        f.grid(row=row, column=0, sticky="ew", padx=18, pady=(14, 0))
+        f.grid(row=row, column=0, sticky="ew", padx=18, pady=(12, 0))
         tk.Label(f, text="▸ " + text, font=("Courier", 7, "bold"),
                  fg=ACCENT, bg=CARD).pack(side="left")
         tk.Frame(f, bg=BORDER, height=1).pack(
@@ -70,7 +85,7 @@ def run_app(purok_id, purok_name):
 
     def make_sidebar_entry(grid_row, key, show=None):
         wrap = tk.Frame(sidebar, bg=CARD)
-        wrap.grid(row=grid_row, column=0, sticky="ew", padx=18, pady=3)
+        wrap.grid(row=grid_row, column=0, sticky="ew", padx=18, pady=2)
         wrap.grid_columnconfigure(0, weight=1)
         tk.Label(wrap, text=key, font=("Courier", 8, "bold"),
                  fg=MUTED, bg=CARD).pack(anchor="w")
@@ -90,9 +105,9 @@ def run_app(purok_id, purok_name):
     make_sidebar_entry(5, "First Name")
     make_sidebar_entry(6, "Last Name")
 
-    # ── Birthdate + auto-age with custom calendar ─────────────────────────────
+    # ── Birthdate calendar ────────────────────────────────────────
     bd_wrap = tk.Frame(sidebar, bg=CARD)
-    bd_wrap.grid(row=7, column=0, sticky="ew", padx=18, pady=3)
+    bd_wrap.grid(row=7, column=0, sticky="ew", padx=18, pady=2)
     bd_wrap.grid_columnconfigure(0, weight=1)
     tk.Label(bd_wrap, text="Birthdate",
              font=("Courier", 8, "bold"), fg=MUTED, bg=CARD).pack(anchor="w")
@@ -101,22 +116,18 @@ def run_app(purok_id, purok_name):
     bd_control.pack(fill="x", pady=(2, 0))
     bd_control.grid_columnconfigure(0, weight=1)
 
-    # Date display
     bd_display = tk.Label(bd_control, text="Select date...",
                           font=("Courier", 9), fg=TEXT, bg=PANEL,
-                          relief="solid", bd=1, highlightthickness=1,
-                          highlightbackground=BORDER)
-    bd_display.grid(row=0, column=0, sticky="ew", padx=0, pady=0, ipady=4)
+                          relief="solid", bd=1,
+                          highlightthickness=1, highlightbackground=BORDER)
+    bd_display.grid(row=0, column=0, sticky="ew", ipady=4)
 
-    # Calendar state
     calendar_state = {
         "year": date.today().year,
         "month": date.today().month,
         "selected_date": date.today(),
         "temp_date": date.today(),
     }
-
-    # Calendar window reference
     calendar_window_ref = [None]
 
     def open_calendar():
@@ -125,21 +136,16 @@ def run_app(purok_id, purok_name):
 
         cal_win = tk.Toplevel(root)
         cal_win.title("Select Date")
-        cal_win.geometry("380x250")
+        cal_win.geometry("380x260")
         cal_win.resizable(False, False)
         cal_win.configure(bg=CARD)
         cal_win.grab_set()
-
-        # Make window appear near the calendar button
         cal_win.transient(root)
-
         calendar_window_ref[0] = cal_win
 
-        # ── Header with year/month selectors ──────────────────────────────────
         header = tk.Frame(cal_win, bg=CARD)
         header.pack(fill="x", padx=8, pady=8)
 
-        # Left arrow
         def prev_month():
             if calendar_state["month"] == 1:
                 calendar_state["month"] = 12
@@ -148,149 +154,6 @@ def run_app(purok_id, purok_name):
                 calendar_state["month"] -= 1
             refresh_calendar()
 
-        tk.Button(header, text="◀", command=prev_month,
-                  bg=PANEL, fg=ACCENT, font=("Courier", 10, "bold"),
-                  relief="flat", bd=0, cursor="hand2", width=2, padx=2, pady=1).pack(side="left", padx=2)
-
-        # Year selector with SCROLLABLE list
-        def open_year_picker():
-            year_win = tk.Toplevel(cal_win)
-            year_win.title("Select Year")
-            year_win.geometry("125x300")
-            year_win.configure(bg=CARD)
-            year_win.resizable(False, False)
-            year_win.grab_set()
-
-            tk.Label(year_win, text="Year", font=("Courier", 10, "bold"),
-                     fg=TEXT, bg=CARD).pack(pady=5)
-
-            # Scrollable year list
-            frame = tk.Frame(year_win, bg=CARD)
-            frame.pack(fill="both", expand=True, padx=8, pady=8)
-
-            canvas = tk.Canvas(frame, bg=PANEL, highlightthickness=1,
-                               highlightbackground=BORDER, height=200)
-            scrollbar = tk.Scrollbar(frame, orient="vertical", command=canvas.yview,
-                                     bg=BORDER, troughcolor=CARD, width=4,
-                                     relief="flat", highlightthickness=0)
-            scrollable_frame = tk.Frame(canvas, bg=PANEL)
-
-            scrollable_frame.bind(
-                "<Configure>",
-                lambda e: canvas.configure(scrollregion=canvas.bbox("all"))
-            )
-
-            canvas.create_window((0, 0), window=scrollable_frame, anchor="nw")
-            canvas.configure(yscrollcommand=scrollbar.set)
-
-            # Mouse wheel scrolling
-            def _on_mousewheel(event):
-                canvas.yview_scroll(int(-1*(event.delta/120)), "units")
-            canvas.bind_all("<MouseWheel>", _on_mousewheel)
-
-            # Generate year buttons (50 years back to 50 years forward)
-            start_year = date.today().year - 50
-            end_year = date.today().year + 50
-
-            for y in range(start_year, end_year + 1):
-                btn_color = ACCENT if y == calendar_state["year"] else PANEL
-                btn_fg = "white" if y == calendar_state["year"] else TEXT
-
-                def select_year(year=y):
-                    calendar_state["year"] = year
-                    year_win.destroy()
-                    refresh_calendar()
-
-                btn = tk.Button(scrollable_frame, text=str(y),
-                                command=select_year,
-                                bg=btn_color, fg=btn_fg,
-                                font=("Courier", 8),
-                                relief="flat", bd=0, cursor="hand2",
-                                width=12)
-                btn.pack(pady=1)
-
-            canvas.pack(side="left", fill="both", expand=True)
-            scrollbar.pack(side="right", fill="y")
-
-            # Scroll to current year
-            def scroll_to_current(*args):
-                year_index = calendar_state["year"] - start_year
-                canvas.yview_moveto((year_index) / (end_year - start_year))
-            
-            root.after(100, scroll_to_current)
-
-        year_btn = tk.Button(header, text=str(calendar_state["year"]),
-                             command=open_year_picker,
-                             bg=PANEL, fg=ACCENT, font=("Courier", 9, "bold"),
-                             relief="flat", bd=0, cursor="hand2", width=4, padx=2, pady=1)
-        year_btn.pack(side="left", padx=3)
-
-        # Month selector with SCROLLABLE list
-        def open_month_picker():
-            month_win = tk.Toplevel(cal_win)
-            month_win.title("Select Month")
-            month_win.geometry("150x320")
-            month_win.configure(bg=CARD)
-            month_win.resizable(False, False)
-            month_win.grab_set()
-
-            tk.Label(month_win, text="Month", font=("Courier", 10, "bold"),
-                     fg=TEXT, bg=CARD).pack(pady=5)
-
-            # Scrollable month list
-            frame = tk.Frame(month_win, bg=CARD)
-            frame.pack(fill="both", expand=True, padx=8, pady=8)
-
-            canvas = tk.Canvas(frame, bg=PANEL, highlightthickness=1,
-                               highlightbackground=BORDER)
-            scrollbar = tk.Scrollbar(frame, orient="vertical", command=canvas.yview,
-                                     bg=BORDER, troughcolor=CARD, width=4,
-                                     relief="flat", highlightthickness=0)
-            scrollable_frame = tk.Frame(canvas, bg=PANEL)
-
-            scrollable_frame.bind(
-                "<Configure>",
-                lambda e: canvas.configure(scrollregion=canvas.bbox("all"))
-            )
-
-            canvas.create_window((0, 0), window=scrollable_frame, anchor="nw")
-            canvas.configure(yscrollcommand=scrollbar.set)
-
-            # Mouse wheel scrolling
-            def _on_mousewheel(event):
-                canvas.yview_scroll(int(-1*(event.delta/120)), "units")
-            canvas.bind_all("<MouseWheel>", _on_mousewheel)
-
-            month_names = ["January", "February", "March", "April", "May", "June",
-                           "July", "August", "September", "October", "November", "December"]
-
-            for i, month_name in enumerate(month_names):
-                btn_color = ACCENT if i + 1 == calendar_state["month"] else PANEL
-                btn_fg = "white" if i + 1 == calendar_state["month"] else TEXT
-
-                def select_month(m=i + 1):
-                    calendar_state["month"] = m
-                    month_win.destroy()
-                    refresh_calendar()
-
-                btn = tk.Button(scrollable_frame, text=month_name,
-                                command=select_month,
-                                bg=btn_color, fg=btn_fg,
-                                font=("Courier", 8),
-                                relief="flat", bd=0, cursor="hand2",
-                                width=14)
-                btn.pack(pady=1)
-
-            canvas.pack(side="left", fill="both", expand=True)
-            scrollbar.pack(side="right", fill="y")
-
-        month_btn = tk.Button(header, text=cal.month_name[calendar_state["month"]],
-                              command=open_month_picker,
-                              bg=PANEL, fg=ACCENT, font=("Courier", 9, "bold"),
-                              relief="flat", bd=0, cursor="hand2", width=10, padx=2, pady=1)
-        month_btn.pack(side="left", padx=3, fill="x", expand=True)
-
-        # Right arrow
         def next_month():
             if calendar_state["month"] == 12:
                 calendar_state["month"] = 1
@@ -299,89 +162,125 @@ def run_app(purok_id, purok_name):
                 calendar_state["month"] += 1
             refresh_calendar()
 
+        tk.Button(header, text="◀", command=prev_month,
+                  bg=PANEL, fg=ACCENT, font=("Courier", 10, "bold"),
+                  relief="flat", bd=0, cursor="hand2", width=2).pack(side="left", padx=2)
+
+        def open_year_picker():
+            ywin = tk.Toplevel(cal_win)
+            ywin.title("Year"); ywin.geometry("130x300")
+            ywin.configure(bg=CARD); ywin.resizable(False, False); ywin.grab_set()
+            tk.Label(ywin, text="Year", font=("Courier", 10, "bold"),
+                     fg=TEXT, bg=CARD).pack(pady=5)
+            fr = tk.Frame(ywin, bg=CARD)
+            fr.pack(fill="both", expand=True, padx=8, pady=8)
+            cv = tk.Canvas(fr, bg=PANEL, highlightthickness=1,
+                           highlightbackground=BORDER)
+            sb = tk.Scrollbar(fr, orient="vertical", command=cv.yview,
+                              bg=BORDER, troughcolor=CARD, width=4,
+                              relief="flat", highlightthickness=0)
+            sf = tk.Frame(cv, bg=PANEL)
+            sf.bind("<Configure>", lambda e: cv.configure(scrollregion=cv.bbox("all")))
+            cv.create_window((0, 0), window=sf, anchor="nw")
+            cv.configure(yscrollcommand=sb.set)
+            cv.bind_all("<MouseWheel>",
+                        lambda e: cv.yview_scroll(int(-1*(e.delta/120)), "units"))
+            sy, ey = date.today().year - 80, date.today().year + 10
+            for y in range(sy, ey + 1):
+                bc = ACCENT if y == calendar_state["year"] else PANEL
+                fc = "white" if y == calendar_state["year"] else TEXT
+                def _sel(yr=y): calendar_state["year"]=yr; ywin.destroy(); refresh_calendar()
+                tk.Button(sf, text=str(y), command=_sel,
+                          bg=bc, fg=fc, font=("Courier", 8),
+                          relief="flat", bd=0, cursor="hand2", width=12).pack(pady=1)
+            cv.pack(side="left", fill="both", expand=True)
+            sb.pack(side="right", fill="y")
+            root.after(100, lambda: cv.yview_moveto(
+                (calendar_state["year"]-sy)/(ey-sy)))
+
+        year_btn = tk.Button(header, text=str(calendar_state["year"]),
+                             command=open_year_picker,
+                             bg=PANEL, fg=ACCENT, font=("Courier", 9, "bold"),
+                             relief="flat", bd=0, cursor="hand2", width=5)
+        year_btn.pack(side="left", padx=3)
+
+        def open_month_picker():
+            mwin = tk.Toplevel(cal_win)
+            mwin.title("Month"); mwin.geometry("155x320")
+            mwin.configure(bg=CARD); mwin.resizable(False, False); mwin.grab_set()
+            tk.Label(mwin, text="Month", font=("Courier", 10, "bold"),
+                     fg=TEXT, bg=CARD).pack(pady=5)
+            for i, mn in enumerate(["January","February","March","April","May","June",
+                                     "July","August","September","October","November","December"]):
+                bc = ACCENT if i+1 == calendar_state["month"] else PANEL
+                fc = "white" if i+1 == calendar_state["month"] else TEXT
+                def _sel(m=i+1): calendar_state["month"]=m; mwin.destroy(); refresh_calendar()
+                tk.Button(mwin, text=mn, command=_sel,
+                          bg=bc, fg=fc, font=("Courier", 8),
+                          relief="flat", bd=0, cursor="hand2", width=16).pack(pady=2)
+
+        month_btn = tk.Button(header, text=cal.month_name[calendar_state["month"]],
+                              command=open_month_picker,
+                              bg=PANEL, fg=ACCENT, font=("Courier", 9, "bold"),
+                              relief="flat", bd=0, cursor="hand2", width=10)
+        month_btn.pack(side="left", padx=3, fill="x", expand=True)
+
         tk.Button(header, text="▶", command=next_month,
                   bg=PANEL, fg=ACCENT, font=("Courier", 10, "bold"),
-                  relief="flat", bd=0, cursor="hand2", width=2, padx=2, pady=1).pack(side="left", padx=2)
+                  relief="flat", bd=0, cursor="hand2", width=2).pack(side="left", padx=2)
 
-        # Today button
         def go_today():
-            today = date.today()
-            calendar_state["year"] = today.year
-            calendar_state["month"] = today.month
-            calendar_state["temp_date"] = today
+            t = date.today()
+            calendar_state.update(year=t.year, month=t.month, temp_date=t)
             refresh_calendar()
 
         tk.Button(header, text="Today", command=go_today,
                   bg=SUCCESS, fg="white", font=("Courier", 7, "bold"),
                   relief="flat", bd=0, cursor="hand2", padx=3, pady=1).pack(side="right", padx=2)
 
-        # ── Calendar grid ─────────────────────────────────────────────────────
-        calendar_frame = tk.Frame(cal_win, bg=CARD)
-        calendar_frame.pack(fill="both", expand=True, padx=8, pady=(0, 8))
-        calendar_frame.grid_columnconfigure(list(range(7)), weight=1)
+        cal_frame = tk.Frame(cal_win, bg=CARD)
+        cal_frame.pack(fill="both", expand=True, padx=8, pady=(0, 8))
+        for i in range(7):
+            cal_frame.grid_columnconfigure(i, weight=1)
 
-        # Weekday headers
-        weekdays = ["Mo", "Tu", "We", "Th", "Fr", "Sa", "Su"]
-        for i, day in enumerate(weekdays):
-            tk.Label(calendar_frame, text=day,
-                     font=("Courier", 8, "bold"), fg=ACCENT, bg=CARD).grid(
-                         row=0, column=i, sticky="nsew", padx=1, pady=2)
+        for i, d in enumerate(["Mo","Tu","We","Th","Fr","Sa","Su"]):
+            tk.Label(cal_frame, text=d, font=("Courier", 8, "bold"),
+                     fg=ACCENT if i < 5 else DANGER,
+                     bg=CARD).grid(row=0, column=i, sticky="nsew", padx=1, pady=2)
 
-        # Day buttons (will be updated by refresh_calendar)
-        calendar_buttons = []
+        cal_buttons = []
 
         def refresh_calendar():
-            # Clear previous buttons
-            for btn in calendar_buttons:
-                btn.destroy()
-            calendar_buttons.clear()
-
-            # Update header buttons
+            for b in cal_buttons: b.destroy()
+            cal_buttons.clear()
             year_btn.config(text=str(calendar_state["year"]))
             month_btn.config(text=cal.month_name[calendar_state["month"]])
-
-            # Get calendar for the month
             month_cal = cal.monthcalendar(calendar_state["year"], calendar_state["month"])
             today = date.today()
-
-            for week_num, week in enumerate(month_cal):
-                for day_num, day in enumerate(week):
+            for wr, week in enumerate(month_cal):
+                for dc, day in enumerate(week):
                     if day == 0:
-                        # Empty cell for days from other months
-                        empty = tk.Label(calendar_frame, text="", bg=CARD)
-                        empty.grid(row=week_num + 1, column=day_num, sticky="nsew", padx=1, pady=1)
-                        calendar_buttons.append(empty)
+                        lbl = tk.Label(cal_frame, text="", bg=CARD)
+                        lbl.grid(row=wr+1, column=dc, sticky="nsew", padx=1, pady=1)
+                        cal_buttons.append(lbl)
                     else:
-                        current_date = date(calendar_state["year"], calendar_state["month"], day)
-
-                        # Determine button color
-                        if current_date == today:
-                            btn_bg = ACCENT2  # Today
-                            btn_fg = "white"
-                        elif current_date == calendar_state["temp_date"]:
-                            btn_bg = ACCENT  # Selected
-                            btn_fg = "white"
-                        else:
-                            btn_bg = PANEL
-                            btn_fg = TEXT
-
-                        def select_date(d=day, cd=current_date):
-                            calendar_state["temp_date"] = cd
+                        cd = date(calendar_state["year"], calendar_state["month"], day)
+                        if cd == today:             bc, fc = ACCENT2, "white"
+                        elif cd == calendar_state["temp_date"]: bc, fc = ACCENT, "white"
+                        else:                       bc, fc = PANEL, TEXT
+                        def _sel(d2=day, cd2=cd):
+                            calendar_state["temp_date"] = cd2
                             refresh_calendar()
+                        b = tk.Button(cal_frame, text=str(day), command=_sel,
+                                      bg=bc, fg=fc, font=("Courier", 8, "bold"),
+                                      relief="flat", bd=0, cursor="hand2",
+                                      width=3, height=1)
+                        b.grid(row=wr+1, column=dc, sticky="nsew", padx=1, pady=1)
+                        cal_buttons.append(b)
 
-                        btn = tk.Button(calendar_frame, text=str(day),
-                                       command=select_date,
-                                       bg=btn_bg, fg=btn_fg,
-                                       font=("Courier", 8, "bold"),
-                                       relief="flat", bd=0, cursor="hand2",
-                                       width=3, height=1)
-                        btn.grid(row=week_num + 1, column=day_num, sticky="nsew", padx=1, pady=1)
-                        calendar_buttons.append(btn)
-
-        # ── Footer with Confirm/Cancel ────────────────────────────────────────
-        footer = tk.Frame(cal_win, bg=CARD)
-        footer.pack(fill="x", padx=8, pady=(0, 8))
-        footer.grid_columnconfigure([0, 1], weight=1)
+        footer_c = tk.Frame(cal_win, bg=CARD)
+        footer_c.pack(fill="x", padx=8, pady=(0, 8))
+        footer_c.grid_columnconfigure([0, 1], weight=1)
 
         def confirm():
             calendar_state["selected_date"] = calendar_state["temp_date"]
@@ -394,24 +293,23 @@ def run_app(purok_id, purok_name):
             calendar_state["temp_date"] = calendar_state["selected_date"]
             cal_win.destroy()
 
-        tk.Button(footer, text="✓ Confirm", command=confirm,
+        tk.Button(footer_c, text="✓ Confirm", command=confirm,
                   bg=SUCCESS, fg="white", font=("Courier", 8, "bold"),
-                  relief="flat", bd=0, cursor="hand2", padx=8, pady=2).grid(row=0, column=0, sticky="ew", padx=2)
-
-        tk.Button(footer, text="✕ Cancel", command=cancel,
+                  relief="flat", bd=0, cursor="hand2",
+                  padx=8, pady=3).grid(row=0, column=0, sticky="ew", padx=2)
+        tk.Button(footer_c, text="✕ Cancel", command=cancel,
                   bg=DANGER, fg="white", font=("Courier", 8, "bold"),
-                  relief="flat", bd=0, cursor="hand2", padx=8, pady=2).grid(row=0, column=1, sticky="ew", padx=2)
+                  relief="flat", bd=0, cursor="hand2",
+                  padx=8, pady=3).grid(row=0, column=1, sticky="ew", padx=2)
 
         refresh_calendar()
 
-    # Calendar button
     cal_btn = tk.Button(bd_control, text="📅", command=open_calendar,
                         bg=ACCENT, fg="white", font=("Courier", 9, "bold"),
-                        relief="flat", bd=0, cursor="hand2", padx=4, pady=2)
-    cal_btn.grid(row=0, column=1, sticky="ew", padx=(4, 0), pady=0)
+                        relief="flat", bd=0, cursor="hand2", padx=6, pady=2)
+    cal_btn.grid(row=0, column=1, sticky="ew", padx=(4, 0))
     bd_control.grid_columnconfigure(1, weight=0)
 
-    # Initialize with today's date
     bd_display.config(text=calendar_state["selected_date"].strftime("%Y-%m-%d"))
     entries["Birthdate"] = calendar_state["selected_date"].strftime("%Y-%m-%d")
 
@@ -435,7 +333,7 @@ def run_app(purok_id, purok_name):
 
     # ── Gender dropdown ───────────────────────────────────────────
     gd_wrap = tk.Frame(sidebar, bg=CARD)
-    gd_wrap.grid(row=8, column=0, sticky="ew", padx=18, pady=3)
+    gd_wrap.grid(row=8, column=0, sticky="ew", padx=18, pady=2)
     tk.Label(gd_wrap, text="Gender", font=("Courier", 8, "bold"),
              fg=MUTED, bg=CARD).pack(anchor="w")
     gender_var = tk.StringVar(value="Select Gender")
@@ -452,7 +350,7 @@ def run_app(purok_id, purok_name):
 
     # ── Status dropdown ───────────────────────────────────────────
     st_wrap = tk.Frame(sidebar, bg=CARD)
-    st_wrap.grid(row=9, column=0, sticky="ew", padx=18, pady=3)
+    st_wrap.grid(row=9, column=0, sticky="ew", padx=18, pady=2)
     tk.Label(st_wrap, text="Status", font=("Courier", 8, "bold"),
              fg=MUTED, bg=CARD).pack(anchor="w")
     status_var = tk.StringVar(value="Registered")
@@ -469,7 +367,61 @@ def run_app(purok_id, purok_name):
 
     make_sidebar_entry(10, "Contact")
 
-    sidebar_section(11, "ACTIONS")
+    # ── Camera section ────────────────────────────────────────────
+    sidebar_section(11, "PHOTO")
+
+    photo_wrap = tk.Frame(sidebar, bg=CARD)
+    photo_wrap.grid(row=12, column=0, sticky="ew", padx=18, pady=4)
+    photo_wrap.grid_columnconfigure(0, weight=1)
+
+    # Photo preview thumbnail
+    thumb_frame = tk.Frame(photo_wrap, bg=PANEL,
+                           highlightthickness=1, highlightbackground=BORDER,
+                           width=60, height=60)
+    thumb_frame.grid(row=0, column=0, sticky="w")
+    thumb_frame.grid_propagate(False)
+
+    thumb_lbl = tk.Label(thumb_frame, text="👤",
+                         font=("Segoe UI Emoji", 22),
+                         bg=PANEL, fg=MUTED)
+    thumb_lbl.place(relx=0.5, rely=0.5, anchor="center")
+
+    _thumb_img = [None]
+
+    def _update_thumb(path):
+        if PIL_OK and path and os.path.exists(path):
+            try:
+                img = Image.open(path).resize((56, 56))
+                imgtk = ImageTk.PhotoImage(img)
+                _thumb_img[0] = imgtk
+                thumb_lbl.config(image=imgtk, text="")
+                photo_status_lbl.config(text="✓ Photo ready", fg=SUCCESS)
+            except Exception:
+                pass
+
+    def _on_photo_taken(path):
+        current_photo["path"] = path
+        _update_thumb(path)
+
+    cam_btn = tk.Button(photo_wrap,
+                        text="📷  Open Camera",
+                        command=lambda: open_camera_window(
+                            root, _on_photo_taken,
+                            bg=CARD, accent=ACCENT, panel=PANEL,
+                            border=BORDER, text=TEXT, muted=MUTED,
+                            success=SUCCESS, danger=DANGER),
+                        bg=ACCENT2, fg="white",
+                        activebackground="#5a3de8",
+                        font=("Courier", 8, "bold"),
+                        relief="flat", bd=0, cursor="hand2")
+    cam_btn.grid(row=0, column=1, sticky="ew", padx=(8, 0), ipady=6)
+
+    photo_status_lbl = tk.Label(photo_wrap, text="No photo taken",
+                                font=("Courier", 7), fg=MUTED, bg=CARD)
+    photo_status_lbl.grid(row=1, column=0, columnspan=2, sticky="w", pady=(4, 0))
+
+    # ── Action buttons ────────────────────────────────────────────
+    sidebar_section(13, "ACTIONS")
 
     def make_btn(row, label, color, active_color, cmd, fg_color="white"):
         btn = tk.Button(sidebar, text=label, command=cmd,
@@ -484,7 +436,7 @@ def run_app(purok_id, purok_name):
     def add_resident(event=None):
         fn = entries["First Name"].get().strip()
         ln = entries["Last Name"].get().strip()
-        bd = entries["Birthdate"]
+        bd = entries["Birthdate"] if isinstance(entries["Birthdate"], str) else ""
         ct = entries["Contact"].get().strip()
         gn = gender_var.get()
         st = status_var.get()
@@ -496,7 +448,8 @@ def run_app(purok_id, purok_name):
             messagebox.showwarning("Invalid Date", "Please select a valid birthdate.")
             return
         database.add_resident(fn, ln, str(ag), ct, purok_id,
-                               birthdate=bd, gender=gn, status=st)
+                               birthdate=bd, gender=gn, status=st,
+                               photo_path=current_photo["path"])
         clear_form(); refresh_table(); update_stats()
         status_msg("Resident added successfully.", SUCCESS)
 
@@ -508,7 +461,7 @@ def run_app(purok_id, purok_name):
         rid = tree.item(sel[0])["values"][0]
         fn = entries["First Name"].get().strip()
         ln = entries["Last Name"].get().strip()
-        bd = entries["Birthdate"]
+        bd = entries["Birthdate"] if isinstance(entries["Birthdate"], str) else ""
         ct = entries["Contact"].get().strip()
         gn = gender_var.get()
         st = status_var.get()
@@ -519,8 +472,10 @@ def run_app(purok_id, purok_name):
         if ag is None:
             messagebox.showwarning("Invalid Date", "Please select a valid birthdate.")
             return
+        photo = current_photo["path"] if current_photo["path"] else None
         database.update_resident(rid, fn, ln, str(ag), ct,
-                                  birthdate=bd, gender=gn, status=st)
+                                  birthdate=bd, gender=gn, status=st,
+                                  photo_path=photo)
         clear_form(); refresh_table(); update_stats()
         status_msg("Resident updated.", WARN)
 
@@ -546,18 +501,18 @@ def run_app(purok_id, purok_name):
             import login
             login.run_login()
 
-    make_btn(12, "＋  Add Resident",    ACCENT,  "#3a7ce8", add_resident)
-    make_btn(13, "✎  Update Selected", WARN,    "#d9903a", update_resident, "#0d0f14")
-    make_btn(14, "✕  Delete Selected", DANGER,  "#d93a52", delete_resident)
+    make_btn(14, "＋  Add Resident",    ACCENT,  "#3a7ce8", add_resident)
+    make_btn(15, "✎  Update Selected", WARN,    "#d9903a", update_resident, "#0d0f14")
+    make_btn(16, "✕  Delete Selected", DANGER,  "#d93a52", delete_resident)
 
     tk.Frame(sidebar, bg=BORDER, height=1).grid(
-        row=15, column=0, sticky="ew", padx=18, pady=(10, 0))
-    make_btn(16, "← Back to Puroks", PANEL, BORDER, go_back, MUTED)
+        row=17, column=0, sticky="ew", padx=18, pady=(10, 0))
+    make_btn(18, "← Back to Puroks", PANEL, BORDER, go_back, MUTED)
 
-    sidebar.grid_rowconfigure(17, weight=1)
+    sidebar.grid_rowconfigure(19, weight=1)
     tk.Label(sidebar, text="© BRGY System  v1.0",
              font=("Courier", 7), fg=BORDER, bg=CARD).grid(
-                 row=18, column=0, pady=(0, 10))
+                 row=20, column=0, pady=(0, 8))
 
     # ═══════════════════════════════════════════════════════════════
     # RIGHT MAIN PANEL
@@ -662,62 +617,46 @@ def run_app(purok_id, purok_name):
         tab = active_tab.get()
         if tab != "All":
             residents = [r for r in residents if _status_of(r) == tab]
-
         rows_html = ""
         for i, r in enumerate(residents):
             st = _status_of(r)
-            sc = {"Registered": "#4fc97e",
-                  "Pending":    "#f7a94f",
-                  "Inactive":   "#f74f6a"}.get(st, "#aaa")
+            sc = {"Registered":"#4fc97e","Pending":"#f7a94f",
+                  "Inactive":"#f74f6a"}.get(st,"#aaa")
             bg = "#13161e" if i % 2 == 0 else "#0d0f14"
-            rows_html += f"""<tr style="background:{bg}">
-              <td>{str(r[0]).zfill(3)}</td>
-              <td>{r[1]}</td><td>{r[2]}</td>
-              <td>{r[3]}</td>
-              <td>{r[7] if len(r) > 7 else ''}</td>
-              <td>{r[6] if len(r) > 6 else ''}</td>
-              <td>{r[4]}</td>
-              <td style="color:{sc};font-weight:bold">{st}</td>
-            </tr>"""
-
-        html = f"""<!DOCTYPE html><html><head><meta charset="utf-8">
-        <title>Resident List — {purok_name}</title>
-        <style>
-          body{{font-family:monospace;background:#0d0f14;color:#e8ecf4;padding:30px;margin:0}}
-          h2{{color:#4f8ef7;margin-bottom:4px}} p{{color:#6b7490;font-size:12px;margin-top:0}}
-          table{{width:100%;border-collapse:collapse;margin-top:16px}}
-          th{{background:#13161e;color:#4f8ef7;padding:10px 12px;text-align:left;
-              font-size:11px;letter-spacing:1px;border-bottom:2px solid #2a2f42}}
-          td{{padding:10px 12px;font-size:12px;border-bottom:1px solid #1a1e2b}}
-          @media print{{
-            body{{background:white;color:#111;padding:20px}}
-            h2{{color:#1a56db}} p{{color:#555}}
-            th{{background:#f0f4ff;color:#1a56db;border-bottom:2px solid #c7d7f9}}
-            td{{border-bottom:1px solid #e5e9f2;color:#222}}
-            tr{{background:white!important}}
-          }}
-        </style></head><body>
-        <h2>🏛 RIMS — Resident Registry</h2>
-        <p>Purok: <b>{purok_name}</b> &nbsp;·&nbsp; Total: <b>{len(residents)}</b>
-           &nbsp;·&nbsp; {datetime.now().strftime('%B %d, %Y  %I:%M %p')}</p>
-        <table><thead><tr>
-          <th>ID</th><th>FIRST NAME</th><th>LAST NAME</th>
-          <th>AGE</th><th>BIRTHDATE</th><th>GENDER</th>
-          <th>CONTACT</th><th>STATUS</th>
-        </tr></thead><tbody>{rows_html}</tbody></table>
-        <script>window.onload=()=>window.print()</script>
-        </body></html>"""
-
-        with tempfile.NamedTemporaryFile("w", suffix=".html",
-                                         delete=False, encoding="utf-8") as tmp:
+            rows_html += (f'<tr style="background:{bg}"><td>{str(r[0]).zfill(3)}</td>'
+                          f'<td>{r[1]}</td><td>{r[2]}</td><td>{r[3]}</td>'
+                          f'<td>{r[7] if len(r)>7 else ""}</td>'
+                          f'<td>{r[6] if len(r)>6 else ""}</td>'
+                          f'<td>{r[4]}</td>'
+                          f'<td style="color:{sc};font-weight:bold">{st}</td></tr>')
+        html = (f'<!DOCTYPE html><html><head><meta charset="utf-8">'
+                f'<title>Resident List</title><style>'
+                f'body{{font-family:monospace;background:#0d0f14;color:#e8ecf4;padding:30px}}'
+                f'h2{{color:#4f8ef7}}p{{color:#6b7490;font-size:12px}}'
+                f'table{{width:100%;border-collapse:collapse;margin-top:16px}}'
+                f'th{{background:#13161e;color:#4f8ef7;padding:10px;text-align:left;'
+                f'font-size:11px;border-bottom:2px solid #2a2f42}}'
+                f'td{{padding:10px;font-size:12px;border-bottom:1px solid #1a1e2b}}'
+                f'@media print{{body{{background:white;color:#111}}'
+                f'th{{background:#f0f4ff;color:#1a56db}}td{{border-bottom:1px solid #e5e9f2}}'
+                f'tr{{background:white!important}}}}</style></head><body>'
+                f'<h2>🏛 RIMS — Resident Registry</h2>'
+                f'<p>Purok: <b>{purok_name}</b> · Total: <b>{len(residents)}</b>'
+                f' · {datetime.now().strftime("%B %d, %Y %I:%M %p")}</p>'
+                f'<table><thead><tr><th>ID</th><th>FIRST NAME</th><th>LAST NAME</th>'
+                f'<th>AGE</th><th>BIRTHDATE</th><th>GENDER</th>'
+                f'<th>CONTACT</th><th>STATUS</th></tr></thead>'
+                f'<tbody>{rows_html}</tbody></table>'
+                f'<script>window.onload=()=>window.print()</script></body></html>')
+        with __import__("tempfile").NamedTemporaryFile(
+                "w", suffix=".html", delete=False, encoding="utf-8") as tmp:
             tmp.write(html)
-            webbrowser.open(f"file://{tmp.name}")
+            __import__("webbrowser").open(f"file://{tmp.name}")
 
     make_tool_btn(right_tools, "⬆  Export", SUCCESS, export_csv)
     make_tool_btn(right_tools, "⬇  Import", ACCENT,  import_csv)
     make_tool_btn(right_tools, "🖨  Print",  WARN,    print_list)
 
-    # Logout pill
     lo_outer = tk.Frame(right_tools, bg="#3d0b14",
                         highlightthickness=1, highlightbackground="#7a1a2e")
     lo_outer.pack(side="left", padx=(10, 0))
@@ -805,7 +744,7 @@ def run_app(purok_id, purok_name):
     tab_bar.grid(row=3, column=0, sticky="ew", padx=20, pady=(0, 4))
 
     active_tab = tk.StringVar(value="All")
-    tab_btns   = {}
+    tab_btns = {}
 
     def switch_tab(name):
         active_tab.set(name)
@@ -905,9 +844,6 @@ def run_app(purok_id, purok_name):
         except: rows.sort(key=lambda x: x[0].lower(), reverse=rev)
         for i, (_, iid) in enumerate(rows):
             tree.move(iid, "", i)
-            tree.item(iid, tags=(("odd" if i % 2 == 0 else "even"),
-                                  tree.item(iid, "tags")[-1]
-                                  if tree.item(iid, "tags") else ""))
         _sort_state["col"] = col
         _sort_state["rev"] = rev
         sort_info.config(text=f"Sorted by: {col} {'↑' if not rev else '↓'}")
@@ -918,42 +854,59 @@ def run_app(purok_id, purok_name):
             tree.delete(row)
         residents = database.get_residents_by_purok(purok_id)
         residents.sort(key=lambda r: r[2].lower())
-
         tab = active_tab.get()
         if tab != "All":
             residents = [r for r in residents if _status_of(r) == tab]
         if query:
             residents = [r for r in residents
                          if query in " ".join(str(v) for v in r).lower()]
-
         for i, r in enumerate(residents):
-            st  = _status_of(r)
-            bd  = r[7] if len(r) > 7 else ""
-            gn  = r[6] if len(r) > 6 else ""
-            tag_row  = "odd" if i % 2 == 0 else "even"
+            st = _status_of(r)
+            bd = r[7] if len(r) > 7 else ""
+            gn = r[6] if len(r) > 6 else ""
             tree.insert("", "end",
                         values=(f"{r[0]:03d}", r[1], r[2], r[3],
                                 bd, gn, r[4], st),
-                        tags=(tag_row, st))
+                        tags=("odd" if i % 2 == 0 else "even", st))
+
+    # ── Resident Info opener ──────────────────────────────────────
+    def _get_selected_resident_row():
+        sel = tree.selection()
+        if not sel:
+            return None
+        vals = tree.item(sel[0])["values"]
+        try:
+            rid = int(str(vals[0]).lstrip("0") or "0")
+        except ValueError:
+            return None
+        return database.get_resident_by_id(rid)
+
+    def open_info(event=None):
+        row = _get_selected_resident_row()
+        if row is None:
+            return
+        open_resident_info(root, row, purok_name,
+                           on_close=lambda: refresh_table())
 
     # ── Form helpers ──────────────────────────────────────────────
     def clear_form():
         for key, e in entries.items():
-            if key != "Birthdate":
-                if isinstance(e, str):
-                    continue
+            if key == "Birthdate":
+                continue
+            if hasattr(e, "delete"):
                 e.delete(0, tk.END)
-        # Reset birthdate to today
         today = date.today()
-        calendar_state["selected_date"] = today
-        calendar_state["temp_date"] = today
-        calendar_state["year"] = today.year
-        calendar_state["month"] = today.month
+        calendar_state.update(selected_date=today, temp_date=today,
+                               year=today.year, month=today.month)
         bd_display.config(text=today.strftime("%Y-%m-%d"))
         entries["Birthdate"] = today.strftime("%Y-%m-%d")
         gender_var.set("Select Gender")
         status_var.set("Registered")
         age_lbl.config(text="Age: —", fg=MUTED)
+        current_photo["path"] = ""
+        thumb_lbl.config(image="", text="👤")
+        _thumb_img[0] = None
+        photo_status_lbl.config(text="No photo taken", fg=MUTED)
 
     def load_selected(event=None):
         sel = tree.selection()
@@ -962,33 +915,35 @@ def run_app(purok_id, purok_name):
         clear_form()
         entries["First Name"].insert(0, r[1])
         entries["Last Name"].insert(0,  r[2])
-        
-        # Parse and set birthdate in calendar
         if r[4]:
             try:
-                bdate = datetime.strptime(r[4], "%Y-%m-%d").date()
-                calendar_state["selected_date"] = bdate
-                calendar_state["temp_date"] = bdate
-                calendar_state["year"] = bdate.year
-                calendar_state["month"] = bdate.month
+                bdate = datetime.strptime(str(r[4]), "%Y-%m-%d").date()
+                calendar_state.update(selected_date=bdate, temp_date=bdate,
+                                       year=bdate.year, month=bdate.month)
                 bd_display.config(text=bdate.strftime("%Y-%m-%d"))
                 entries["Birthdate"] = bdate.strftime("%Y-%m-%d")
             except ValueError:
                 pass
-        
         entries["Contact"].insert(0,    r[6])
         gender_var.set(r[5] if r[5] else "Select Gender")
         status_var.set(r[7] if r[7] else "Registered")
         _calc_age()
+        # Load existing photo into thumb
+        row_full = _get_selected_resident_row()
+        if row_full and len(row_full) > 9 and row_full[9]:
+            current_photo["path"] = row_full[9]
+            _update_thumb(row_full[9])
 
     # ── Context menu ──────────────────────────────────────────────
     ctx = tk.Menu(root, tearoff=0, bg=PANEL, fg=TEXT,
                   activebackground=ACCENT, activeforeground="white",
                   font=("Courier", 9), relief="flat", bd=0)
-    ctx.add_command(label="✎  Edit",    command=load_selected)
-    ctx.add_command(label="✕  Delete",  command=delete_resident)
+    ctx.add_command(label="🔍  View Info",  command=open_info)
     ctx.add_separator()
-    ctx.add_command(label="＋  Add New", command=clear_form)
+    ctx.add_command(label="✎  Edit",       command=load_selected)
+    ctx.add_command(label="✕  Delete",     command=delete_resident)
+    ctx.add_separator()
+    ctx.add_command(label="＋  Add New",   command=clear_form)
 
     def show_ctx(event):
         iid = tree.identify_row(event.y)
@@ -996,7 +951,8 @@ def run_app(purok_id, purok_name):
             tree.selection_set(iid)
             ctx.post(event.x_root, event.y_root)
 
-    tree.bind("<Double-1>", load_selected)
+    # Double-click → open info
+    tree.bind("<Double-1>", open_info)
     tree.bind("<Button-3>", show_ctx)
 
     entries["Contact"].bind("<Return>", add_resident)

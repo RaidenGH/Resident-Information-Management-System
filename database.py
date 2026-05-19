@@ -1,4 +1,5 @@
 import sqlite3
+import os
 
 DB_NAME = "residents.db"
 
@@ -26,16 +27,15 @@ def create_tables():
                 gender     TEXT DEFAULT '',
                 birthdate  TEXT DEFAULT '',
                 status     TEXT DEFAULT 'Registered',
+                photo_path TEXT DEFAULT '',
                 FOREIGN KEY (purok_id) REFERENCES puroks(id)
             )
         """)
-        # Migrate existing tables that may be missing the new columns
         _migrate(conn)
         conn.commit()
 
 
 def _migrate(conn):
-    """Add missing columns to residents table if upgrading from old schema."""
     cursor = conn.execute("PRAGMA table_info(residents)")
     existing = {row[1] for row in cursor.fetchall()}
     if "gender" not in existing:
@@ -44,6 +44,8 @@ def _migrate(conn):
         conn.execute("ALTER TABLE residents ADD COLUMN birthdate TEXT DEFAULT ''")
     if "status" not in existing:
         conn.execute("ALTER TABLE residents ADD COLUMN status TEXT DEFAULT 'Registered'")
+    if "photo_path" not in existing:
+        conn.execute("ALTER TABLE residents ADD COLUMN photo_path TEXT DEFAULT ''")
 
 
 # ── Puroks ────────────────────────────────────────────────────────────────────
@@ -71,28 +73,44 @@ def count_puroks():
 
 # ── Residents ─────────────────────────────────────────────────────────────────
 def add_resident(first_name, last_name, age, contact, purok_id,
-                 birthdate="", gender="", status="Registered"):
+                 birthdate="", gender="", status="Registered", photo_path=""):
     with get_connection() as conn:
         conn.execute("""
             INSERT INTO residents
                 (first_name, last_name, age, contact, purok_id,
-                 gender, birthdate, status)
-            VALUES (?, ?, ?, ?, ?, ?, ?, ?)
+                 gender, birthdate, status, photo_path)
+            VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)
         """, (first_name, last_name, age, contact, purok_id,
-              gender, birthdate, status))
+              gender, birthdate, status, photo_path))
         conn.commit()
 
 
 def update_resident(resident_id, first_name, last_name, age, contact,
-                    birthdate="", gender="", status="Registered"):
+                    birthdate="", gender="", status="Registered", photo_path=None):
     with get_connection() as conn:
-        conn.execute("""
-            UPDATE residents
-            SET first_name=?, last_name=?, age=?, contact=?,
-                gender=?, birthdate=?, status=?
-            WHERE id=?
-        """, (first_name, last_name, age, contact,
-              gender, birthdate, status, resident_id))
+        if photo_path is not None:
+            conn.execute("""
+                UPDATE residents
+                SET first_name=?, last_name=?, age=?, contact=?,
+                    gender=?, birthdate=?, status=?, photo_path=?
+                WHERE id=?
+            """, (first_name, last_name, age, contact,
+                  gender, birthdate, status, photo_path, resident_id))
+        else:
+            conn.execute("""
+                UPDATE residents
+                SET first_name=?, last_name=?, age=?, contact=?,
+                    gender=?, birthdate=?, status=?
+                WHERE id=?
+            """, (first_name, last_name, age, contact,
+                  gender, birthdate, status, resident_id))
+        conn.commit()
+
+
+def update_photo(resident_id, photo_path):
+    with get_connection() as conn:
+        conn.execute("UPDATE residents SET photo_path=? WHERE id=?",
+                     (photo_path, resident_id))
         conn.commit()
 
 
@@ -105,16 +123,26 @@ def delete_resident(resident_id):
 def get_residents_by_purok(purok_id):
     """
     Returns rows as:
-    (id, first_name, last_name, age, contact, purok_id, gender, birthdate, status)
+    (id, first_name, last_name, age, contact, purok_id,
+     gender, birthdate, status, photo_path)
     """
     with get_connection() as conn:
         return conn.execute("""
             SELECT id, first_name, last_name, age, contact, purok_id,
-                   gender, birthdate, status
+                   gender, birthdate, status, photo_path
             FROM residents
             WHERE purok_id=?
             ORDER BY last_name, first_name
         """, (purok_id,)).fetchall()
+
+
+def get_resident_by_id(resident_id):
+    with get_connection() as conn:
+        return conn.execute("""
+            SELECT id, first_name, last_name, age, contact, purok_id,
+                   gender, birthdate, status, photo_path
+            FROM residents WHERE id=?
+        """, (resident_id,)).fetchone()
 
 
 def count_residents():
