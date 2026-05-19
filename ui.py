@@ -7,6 +7,7 @@ from logo import make_logo_canvas
 from datetime import date, datetime
 import calendar as cal
 import os
+import shutil
 
 from resident_info import open_resident_info
 from camera_capture import open_camera_window
@@ -18,6 +19,10 @@ except ImportError:
     PIL_OK = False
 
 PHOTOS_DIR = "resident_photos"
+
+
+def _ensure_photos_dir():
+    os.makedirs(PHOTOS_DIR, exist_ok=True)
 
 
 def run_app(purok_id, purok_name):
@@ -37,6 +42,8 @@ def run_app(purok_id, purok_name):
     PENDING_C  = "#f7a94f"
     INACTIVE_C = "#f74f6a"
 
+    _ensure_photos_dir()
+
     # ── Root — fullscreen ─────────────────────────────────────────────────────
     root = tk.Tk()
     root.title(f"Residents — {purok_name}")
@@ -47,7 +54,6 @@ def run_app(purok_id, purok_name):
     root.grid_rowconfigure(0, weight=1)
     root.grid_columnconfigure(1, weight=1)
 
-    # Shared photo path for current registration
     current_photo = {"path": ""}
 
     # ═══════════════════════════════════════════════════════════════
@@ -367,22 +373,26 @@ def run_app(purok_id, purok_name):
 
     make_sidebar_entry(10, "Contact")
 
-    # ── Camera section ────────────────────────────────────────────
+    # ══════════════════════════════════════════════════════════════
+    # PHOTO SECTION — thumbnail + Browse + Camera
+    # ══════════════════════════════════════════════════════════════
     sidebar_section(11, "PHOTO")
 
-    photo_wrap = tk.Frame(sidebar, bg=CARD)
-    photo_wrap.grid(row=12, column=0, sticky="ew", padx=18, pady=4)
-    photo_wrap.grid_columnconfigure(0, weight=1)
+    photo_outer = tk.Frame(sidebar, bg=CARD)
+    photo_outer.grid(row=12, column=0, sticky="ew", padx=18, pady=(4, 2))
+    photo_outer.grid_columnconfigure(1, weight=1)
 
-    # Photo preview thumbnail
-    thumb_frame = tk.Frame(photo_wrap, bg=PANEL,
-                           highlightthickness=1, highlightbackground=BORDER,
-                           width=60, height=60)
-    thumb_frame.grid(row=0, column=0, sticky="w")
-    thumb_frame.grid_propagate(False)
+    # ── Thumbnail ─────────────────────────────────────────────────
+    thumb_border = tk.Frame(photo_outer, bg=ACCENT2,
+                            highlightthickness=1, highlightbackground=BORDER)
+    thumb_border.grid(row=0, column=0, rowspan=2, sticky="nw", padx=(0, 10))
 
-    thumb_lbl = tk.Label(thumb_frame, text="👤",
-                         font=("Segoe UI Emoji", 22),
+    thumb_inner = tk.Frame(thumb_border, bg=PANEL, width=58, height=58)
+    thumb_inner.pack(padx=2, pady=2)
+    thumb_inner.pack_propagate(False)
+
+    thumb_lbl = tk.Label(thumb_inner, text="👤",
+                         font=("Segoe UI Emoji", 20),
                          bg=PANEL, fg=MUTED)
     thumb_lbl.place(relx=0.5, rely=0.5, anchor="center")
 
@@ -391,34 +401,84 @@ def run_app(purok_id, purok_name):
     def _update_thumb(path):
         if PIL_OK and path and os.path.exists(path):
             try:
-                img = Image.open(path).resize((56, 56))
+                img = Image.open(path).resize((54, 54))
                 imgtk = ImageTk.PhotoImage(img)
                 _thumb_img[0] = imgtk
                 thumb_lbl.config(image=imgtk, text="")
                 photo_status_lbl.config(text="✓ Photo ready", fg=SUCCESS)
+                thumb_border.config(bg=SUCCESS)
             except Exception:
                 pass
+
+    # ── Right side: two buttons stacked ───────────────────────────
+    btn_col = tk.Frame(photo_outer, bg=CARD)
+    btn_col.grid(row=0, column=1, sticky="ew")
+    btn_col.grid_columnconfigure(0, weight=1)
+    btn_col.grid_columnconfigure(1, weight=1)
 
     def _on_photo_taken(path):
         current_photo["path"] = path
         _update_thumb(path)
 
-    cam_btn = tk.Button(photo_wrap,
-                        text="📷  Open Camera",
+    def _browse_photo():
+        """Browse local files for a photo."""
+        fp = filedialog.askopenfilename(
+            parent=root,
+            title="Select Resident Photo",
+            filetypes=[
+                ("Images", "*.jpg *.jpeg *.png *.bmp *.webp *.gif"),
+                ("JPEG",   "*.jpg *.jpeg"),
+                ("PNG",    "*.png"),
+                ("All files", "*.*"),
+            ]
+        )
+        if not fp:
+            return
+        ext   = os.path.splitext(fp)[1].lower() or ".jpg"
+        fname = f"resident_{datetime.now().strftime('%Y%m%d_%H%M%S')}{ext}"
+        dest  = os.path.join(PHOTOS_DIR, fname)
+        try:
+            shutil.copy2(fp, dest)
+            _on_photo_taken(dest)
+        except Exception as e:
+            messagebox.showerror("Error", f"Could not copy file:\n{e}")
+
+    # Browse button
+    browse_btn = tk.Button(btn_col, text="📁  Browse",
+                           command=_browse_photo,
+                           bg=PANEL, fg=ACCENT,
+                           activebackground=ACCENT,
+                           activeforeground="white",
+                           font=("Courier", 8, "bold"),
+                           relief="flat", bd=0, cursor="hand2",
+                           highlightthickness=1, highlightbackground=BORDER)
+    browse_btn.grid(row=0, column=0, sticky="ew", padx=(0, 3), ipady=6)
+
+    # Camera button
+    cam_btn = tk.Button(btn_col, text="📷  Camera",
                         command=lambda: open_camera_window(
                             root, _on_photo_taken,
                             bg=CARD, accent=ACCENT, panel=PANEL,
                             border=BORDER, text=TEXT, muted=MUTED,
                             success=SUCCESS, danger=DANGER),
-                        bg=ACCENT2, fg="white",
-                        activebackground="#5a3de8",
+                        bg=PANEL, fg=ACCENT2,
+                        activebackground=ACCENT2,
+                        activeforeground="white",
                         font=("Courier", 8, "bold"),
-                        relief="flat", bd=0, cursor="hand2")
-    cam_btn.grid(row=0, column=1, sticky="ew", padx=(8, 0), ipady=6)
+                        relief="flat", bd=0, cursor="hand2",
+                        highlightthickness=1, highlightbackground=BORDER)
+    cam_btn.grid(row=0, column=1, sticky="ew", padx=(3, 0), ipady=6)
 
-    photo_status_lbl = tk.Label(photo_wrap, text="No photo taken",
+    # Hover effects
+    browse_btn.bind("<Enter>", lambda e: browse_btn.config(bg=ACCENT, fg="white"))
+    browse_btn.bind("<Leave>", lambda e: browse_btn.config(bg=PANEL,  fg=ACCENT))
+    cam_btn.bind("<Enter>",   lambda e: cam_btn.config(bg=ACCENT2, fg="white"))
+    cam_btn.bind("<Leave>",   lambda e: cam_btn.config(bg=PANEL,   fg=ACCENT2))
+
+    # Status label below
+    photo_status_lbl = tk.Label(photo_outer, text="No photo  ·  browse or use camera",
                                 font=("Courier", 7), fg=MUTED, bg=CARD)
-    photo_status_lbl.grid(row=1, column=0, columnspan=2, sticky="w", pady=(4, 0))
+    photo_status_lbl.grid(row=1, column=1, sticky="w", pady=(4, 0))
 
     # ── Action buttons ────────────────────────────────────────────
     sidebar_section(13, "ACTIONS")
@@ -885,8 +945,11 @@ def run_app(purok_id, purok_name):
         row = _get_selected_resident_row()
         if row is None:
             return
-        open_resident_info(root, row, purok_name,
-                           on_close=lambda: refresh_table())
+        open_resident_info(
+            root, row, purok_name,
+            on_close=lambda: refresh_table(),
+            on_photo_updated=lambda p: refresh_table()
+        )
 
     # ── Form helpers ──────────────────────────────────────────────
     def clear_form():
@@ -906,7 +969,9 @@ def run_app(purok_id, purok_name):
         current_photo["path"] = ""
         thumb_lbl.config(image="", text="👤")
         _thumb_img[0] = None
-        photo_status_lbl.config(text="No photo taken", fg=MUTED)
+        thumb_border.config(bg=ACCENT2)
+        photo_status_lbl.config(
+            text="No photo  ·  browse or use camera", fg=MUTED)
 
     def load_selected(event=None):
         sel = tree.selection()
@@ -924,11 +989,10 @@ def run_app(purok_id, purok_name):
                 entries["Birthdate"] = bdate.strftime("%Y-%m-%d")
             except ValueError:
                 pass
-        entries["Contact"].insert(0,    r[6])
+        entries["Contact"].insert(0, r[6])
         gender_var.set(r[5] if r[5] else "Select Gender")
         status_var.set(r[7] if r[7] else "Registered")
         _calc_age()
-        # Load existing photo into thumb
         row_full = _get_selected_resident_row()
         if row_full and len(row_full) > 9 and row_full[9]:
             current_photo["path"] = row_full[9]
@@ -951,7 +1015,6 @@ def run_app(purok_id, purok_name):
             tree.selection_set(iid)
             ctx.post(event.x_root, event.y_root)
 
-    # Double-click → open info
     tree.bind("<Double-1>", open_info)
     tree.bind("<Button-3>", show_ctx)
 

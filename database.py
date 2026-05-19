@@ -12,8 +12,11 @@ def create_tables():
     with get_connection() as conn:
         conn.execute("""
             CREATE TABLE IF NOT EXISTS puroks (
-                id   INTEGER PRIMARY KEY AUTOINCREMENT,
-                name TEXT NOT NULL UNIQUE
+                id       INTEGER PRIMARY KEY AUTOINCREMENT,
+                name     TEXT NOT NULL UNIQUE,
+                region   TEXT DEFAULT '',
+                city     TEXT DEFAULT '',
+                barangay TEXT DEFAULT ''
             )
         """)
         conn.execute("""
@@ -36,16 +39,29 @@ def create_tables():
 
 
 def _migrate(conn):
+    # ── residents columns ─────────────────────────────────────────────────────
     cursor = conn.execute("PRAGMA table_info(residents)")
-    existing = {row[1] for row in cursor.fetchall()}
-    if "gender" not in existing:
+    res_cols = {row[1] for row in cursor.fetchall()}
+    if "gender" not in res_cols:
         conn.execute("ALTER TABLE residents ADD COLUMN gender TEXT DEFAULT ''")
-    if "birthdate" not in existing:
+    if "birthdate" not in res_cols:
         conn.execute("ALTER TABLE residents ADD COLUMN birthdate TEXT DEFAULT ''")
-    if "status" not in existing:
+    if "status" not in res_cols:
         conn.execute("ALTER TABLE residents ADD COLUMN status TEXT DEFAULT 'Registered'")
-    if "photo_path" not in existing:
+    if "photo_path" not in res_cols:
         conn.execute("ALTER TABLE residents ADD COLUMN photo_path TEXT DEFAULT ''")
+
+    # ── puroks location + archive columns ────────────────────────────────────
+    cursor = conn.execute("PRAGMA table_info(puroks)")
+    purok_cols = {row[1] for row in cursor.fetchall()}
+    if "region" not in purok_cols:
+        conn.execute("ALTER TABLE puroks ADD COLUMN region TEXT DEFAULT ''")
+    if "city" not in purok_cols:
+        conn.execute("ALTER TABLE puroks ADD COLUMN city TEXT DEFAULT ''")
+    if "barangay" not in purok_cols:
+        conn.execute("ALTER TABLE puroks ADD COLUMN barangay TEXT DEFAULT ''")
+    if "archived" not in purok_cols:
+        conn.execute("ALTER TABLE puroks ADD COLUMN archived INTEGER DEFAULT 0")
 
 
 # ── Puroks ────────────────────────────────────────────────────────────────────
@@ -53,16 +69,52 @@ def create_purok_table():
     create_tables()
 
 
-def add_purok(name):
+def add_purok(name, region="", city="", barangay=""):
     with get_connection() as conn:
-        conn.execute("INSERT INTO puroks (name) VALUES (?)", (name,))
+        conn.execute(
+            "INSERT INTO puroks (name, region, city, barangay) VALUES (?, ?, ?, ?)",
+            (name, region, city, barangay)
+        )
         conn.commit()
 
 
 def get_puroks():
     with get_connection() as conn:
         return conn.execute(
-            "SELECT id, name FROM puroks ORDER BY name"
+            "SELECT id, name, region, city, barangay FROM puroks "
+            "WHERE archived = 0 ORDER BY name"
+        ).fetchall()
+
+
+def delete_purok(purok_id):
+    """Permanently remove a purok and unlink its residents."""
+    with get_connection() as conn:
+        conn.execute("UPDATE residents SET purok_id = NULL WHERE purok_id = ?",
+                     (purok_id,))
+        conn.execute("DELETE FROM puroks WHERE id = ?", (purok_id,))
+        conn.commit()
+
+
+def archive_purok(purok_id):
+    """Soft-delete: hide from list but keep data intact."""
+    with get_connection() as conn:
+        conn.execute("UPDATE puroks SET archived = 1 WHERE id = ?", (purok_id,))
+        conn.commit()
+
+
+def restore_purok(purok_id):
+    """Un-archive a previously archived purok."""
+    with get_connection() as conn:
+        conn.execute("UPDATE puroks SET archived = 0 WHERE id = ?", (purok_id,))
+        conn.commit()
+
+
+def get_archived_puroks():
+    """Return all archived puroks."""
+    with get_connection() as conn:
+        return conn.execute(
+            "SELECT id, name, region, city, barangay FROM puroks "
+            "WHERE archived = 1 ORDER BY name"
         ).fetchall()
 
 

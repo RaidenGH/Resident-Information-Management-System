@@ -1,7 +1,7 @@
 import tkinter as tk
-from tkinter import messagebox
+from tkinter import messagebox, filedialog
 import os
-import threading
+import shutil
 from datetime import datetime
 
 try:
@@ -35,35 +35,101 @@ def open_camera_window(parent, on_photo_taken,
     """
     ensure_photos_dir()
 
-    if not CV2_OK or not PIL_OK:
+    if not PIL_OK:
         messagebox.showerror(
             "Missing Libraries",
-            "opencv-python and Pillow are required.\n"
-            "Run: pip install opencv-python pillow"
+            "Pillow is required.\n"
+            "Run: pip install pillow"
         )
         return
 
     win = tk.Toplevel(parent)
     win.title("📷  Capture Photo")
     win.configure(bg=bg)
-    win.geometry("520x460")
+    win.geometry("520x520")
     win.resizable(False, False)
     win.grab_set()
 
     win.update_idletasks()
     sw, sh = win.winfo_screenwidth(), win.winfo_screenheight()
-    win.geometry(f"520x460+{(sw-520)//2}+{(sh-460)//2}")
+    win.geometry(f"520x520+{(sw-520)//2}+{(sh-520)//2}")
 
     # ── Top stripe ────────────────────────────────────────────────
     tk.Frame(win, bg=accent, height=3).pack(fill="x")
 
-    # ── Header ────────────────────────────────────────────────────
-    tk.Label(win, text="📷  CAPTURE RESIDENT PHOTO",
+    # ── Header row with Browse button on the right ───────────────
+    header_row = tk.Frame(win, bg=bg)
+    header_row.pack(fill="x", padx=20, pady=(12, 4))
+    header_row.grid_columnconfigure(0, weight=1)
+
+    # Title labels (left side)
+    title_frame = tk.Frame(header_row, bg=bg)
+    title_frame.grid(row=0, column=0, sticky="w")
+    tk.Label(title_frame, text="📷  CAPTURE RESIDENT PHOTO",
              font=("Courier", 10, "bold"),
-             fg=accent, bg=bg).pack(pady=(12, 4))
-    tk.Label(win, text="Position the resident in the frame and press Capture",
+             fg=accent, bg=bg).pack(anchor="w")
+    tk.Label(title_frame, text="Position the resident in the frame and press Capture",
              font=("Courier", 8),
-             fg=muted, bg=bg).pack()
+             fg=muted, bg=bg).pack(anchor="w")
+
+    # Browse button (upper right)
+    def browse_photo():
+        file_path = filedialog.askopenfilename(
+            parent=win,
+            title="Select Resident Photo",
+            filetypes=[
+                ("Image files", "*.jpg *.jpeg *.png *.bmp *.gif *.webp"),
+                ("JPEG", "*.jpg *.jpeg"),
+                ("PNG", "*.png"),
+                ("All files", "*.*")
+            ]
+        )
+        if not file_path:
+            return  # User cancelled
+
+        # Stop camera if running
+        stop_camera()
+
+        # Copy to resident_photos folder with timestamp
+        ext = os.path.splitext(file_path)[1].lower() or ".jpg"
+        fname = f"resident_{datetime.now().strftime('%Y%m%d_%H%M%S')}{ext}"
+        dest_path = os.path.join(PHOTOS_DIR, fname)
+
+        try:
+            shutil.copy2(file_path, dest_path)
+        except Exception as e:
+            messagebox.showerror("Error", f"Failed to copy file:\n{e}")
+            return
+
+        # Show preview in feed area
+        try:
+            img = Image.open(dest_path).resize((CAM_W, CAM_H))
+            imgtk = ImageTk.PhotoImage(img)
+            feed_lbl.config(image=imgtk, text="")
+            feed_lbl._img = imgtk
+        except Exception:
+            feed_lbl.config(text="📁  Photo loaded", fg=accent,
+                           font=("Courier", 14, "bold"), compound="center")
+
+        _state["captured"] = True
+        _state["capture_path"] = dest_path
+
+        capture_btn.config(state="disabled", bg=muted)
+        retake_btn.config(state="normal",  bg="#d9903a")
+        confirm_btn.config(state="normal",  bg=success)
+
+        status_lbl.config(text=f"✓ Photo loaded: {os.path.basename(file_path)}", fg=success)
+
+    browse_btn = tk.Button(header_row, text="📁  Browse",
+                           command=browse_photo,
+                           bg=panel, fg=accent,
+                           activebackground=border,
+                           activeforeground="white",
+                           font=("Courier", 8, "bold"),
+                           relief="flat", bd=0, cursor="hand2",
+                           highlightthickness=1, highlightbackground=border,
+                           padx=10, pady=4)
+    browse_btn.grid(row=0, column=1, sticky="e")
 
     # ── Camera feed ───────────────────────────────────────────────
     feed_frame = tk.Frame(win, bg=panel,
@@ -85,6 +151,11 @@ def open_camera_window(parent, on_photo_taken,
 
     # ── Start camera ──────────────────────────────────────────────
     def start_camera():
+        if not CV2_OK:
+            feed_lbl.config(
+                text="⚠ No camera found.\nConnect a webcam and try again.",
+                fg=danger, font=("Courier", 10), compound="center")
+            return
         cap = cv2.VideoCapture(0)
         if not cap.isOpened():
             feed_lbl.config(
@@ -208,7 +279,7 @@ def open_camera_window(parent, on_photo_taken,
 
     status_lbl = tk.Label(win, text="", font=("Courier", 8),
                           fg=success, bg=bg)
-    status_lbl.pack()
+    status_lbl.pack(pady=(4, 0))
 
     # Start camera after window is ready
     win.after(200, start_camera)
