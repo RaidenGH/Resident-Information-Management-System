@@ -60,6 +60,8 @@ def _migrate(conn):
         conn.execute("ALTER TABLE puroks ADD COLUMN city TEXT DEFAULT ''")
     if "barangay" not in purok_cols:
         conn.execute("ALTER TABLE puroks ADD COLUMN barangay TEXT DEFAULT ''")
+    if "province" not in purok_cols:
+        conn.execute("ALTER TABLE puroks ADD COLUMN province TEXT DEFAULT ''")
     if "archived" not in purok_cols:
         conn.execute("ALTER TABLE puroks ADD COLUMN archived INTEGER DEFAULT 0")
 
@@ -69,11 +71,11 @@ def create_purok_table():
     create_tables()
 
 
-def add_purok(name, region="", city="", barangay=""):
+def add_purok(name, region="", province="", city="", barangay=""):
     with get_connection() as conn:
         conn.execute(
-            "INSERT INTO puroks (name, region, city, barangay) VALUES (?, ?, ?, ?)",
-            (name, region, city, barangay)
+            "INSERT INTO puroks (name, region, province, city, barangay) VALUES (?, ?, ?, ?, ?)",
+            (name, region, province, city, barangay)
         )
         conn.commit()
 
@@ -81,7 +83,7 @@ def add_purok(name, region="", city="", barangay=""):
 def get_puroks():
     with get_connection() as conn:
         return conn.execute(
-            "SELECT id, name, region, city, barangay FROM puroks "
+            "SELECT id, name, province, city, barangay FROM puroks "
             "WHERE archived = 0 ORDER BY name"
         ).fetchall()
 
@@ -113,7 +115,7 @@ def get_archived_puroks():
     """Return all archived puroks."""
     with get_connection() as conn:
         return conn.execute(
-            "SELECT id, name, region, city, barangay FROM puroks "
+            "SELECT id, name, province, city, barangay FROM puroks "
             "WHERE archived = 1 ORDER BY name"
         ).fetchall()
 

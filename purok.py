@@ -8,137 +8,228 @@ from logo import make_logo_canvas
 # ── Philippine Location Data (Davao Region focus + major regions) ─────────────
 PH_LOCATIONS = {
     "Davao Region (XI)": {
-        "Davao City": [
-            "Agdao", "Alambre", "Alejandra Navarro", "Alfonso Angliongto Sr.",
-            "Angalan", "Atan-Awe", "Baganihan", "Bago Aplaya", "Bago Gallera",
-            "Bago Oshiro", "Baguio", "Balengaeng", "Baliok", "Bangkas Heights",
-            "Bantol", "Baracatan", "Barangay 1-A", "Barangay 2-A", "Barangay 3-A",
-            "Barangay 4-A", "Barangay 5-A", "Barangay 6-A", "Barangay 7-A",
-            "Barangay 8-A", "Barangay 9-A", "Barangay 10-A", "Barangay 11-B",
-            "Barangay 12-B", "Barangay 13-B", "Barangay 14-B", "Barangay 15-B",
-            "Barangay 16-B", "Barangay 17-B", "Barangay 18-B", "Barangay 19-B",
-            "Barangay 20-B", "Barangay 21-C", "Barangay 22-C", "Barangay 23-C",
-            "Barangay 24-C", "Barangay 25-C", "Barangay 26-C", "Barangay 27-C",
-            "Barangay 28-C", "Barangay 29-C", "Barangay 30-C", "Barangay 31-D",
-            "Barangay 32-D", "Barangay 33-D", "Barangay 34-D", "Barangay 35-D",
-            "Barangay 36-D", "Barangay 37-D", "Barangay 38-D", "Barangay 39-D",
-            "Barangay 40-D", "Buhangin", "Bunawan", "Cabantian", "Calinan",
-            "Callawa", "Catalunan Grande", "Catalunan Pequeño", "Communal",
-            "Crossing Bayabas", "Dacudao", "Dalag", "Daliaon Plantation",
-            "Damascus", "Dumoy", "Eden", "Fatima", "Gatungan", "Gov. Paciano Bangoy",
-            "Gov. Vicente Duterte", "Gumalang", "Indangan", "Kilate", "Lacson",
-            "Lamanan", "Langub", "Lapu-lapu", "Leon Garcia Sr.", "Lizada",
-            "Los Amigos", "Lubogan", "Lumiad", "Ma-a", "Mabuhay", "Malagos",
-            "Malamba", "Manambulan", "Mandug", "Manuel Guianga", "Mapula",
-            "Marapangi", "Marilog", "Matina Aplaya", "Matina Crossing",
-            "Matina Pangi", "Megkawayan", "Mintal", "Mudiang", "Mulig",
-            "New Carmen", "New Valencia", "Pampanga", "Panacan", "Pañabo",
-            "Paradise Embak", "Riverside", "Salapawan", "Saliducon", "Samo-Samo",
-            "San Antonio", "Santo Niño", "Sasa", "Sirib", "Sirawan", "Sirib",
-            "Tacunan", "Tagakpan", "Tagluno", "Tagurano", "Talomo",
-            "Talomonan", "Tamayong", "Tamugan", "Tapak", "Tawan-tawan",
-            "Tibuloy", "Tibungco", "Tigatto", "Toril", "Tugbok", "Tungkalan",
-            "Ubalde", "Ula", "Waan", "Wilfredo Aquino", "Wines",
-        ],
-        "Tagum City": [
-            "Apokon", "Bincungan", "Busaon", "Canocotan", "Cuambogan",
-            "La Filipina", "Liboganon", "Madaum", "Magdum", "Magugpo East",
-            "Magugpo North", "Magugpo Poblacion", "Magugpo South", "Magugpo West",
-            "Mankilam", "New Balamban", "Nueva Fuerza", "Pagsabangan",
-            "Pandapan", "San Agustin", "San Isidro", "San Miguel", "Visayan Village",
-        ],
-        "Panabo City": [
-            "A.O. Floirendo", "Buenavista", "Cacao", "Cagangohan", "Consolacion",
-            "Dapco", "Gredu", "J.P. Laurel", "Katipunan", "Kasilak",
-            "Langkilaan", "Lasang", "Mabunao", "Maduao", "Malativas",
-            "Manay", "Nanyo", "New Malaga", "New Panaon", "New Santiago",
-            "Quezon", "Salvacion", "San Francisco", "San Nicolas", "San Pedro",
-            "San Roque", "San Vicente", "Santo Niño", "Sindaton", "Southern Davao",
-            "Tibungol", "Upper Licanan", "Waterfall",
-        ],
-        "Digos City": [
-            "Aplaya", "Balabag", "Binaton", "Cogon", "Colorado", "Dawis",
-            "Dulangan", "Goma", "Igpit", "Kapatagan", "Kiagot", "Lungag",
-            "Mahayahay", "Matti", "Ruparan", "San Agustin", "San Jose",
-            "San Miguel", "San Roque", "Sinawilan", "Soong", "Tiguman",
-            "Tres de Mayo", "Zone 1", "Zone 2", "Zone 3",
-        ],
-        "Mati City": [
-            "Badas", "Bobon", "Buso", "Cabuaya", "Central", "Don Enrique Lopez",
-            "Don Martin Marundan", "Don Salvador Lopez Sr.", "Dawan", "Macambol",
-            "Magsaysay", "Matiao", "Mayo", "Sainz", "Sanghay", "Tagabakid",
-            "Tagbinonga", "Taguibo", "Tamisan",
-        ],
+        "Davao del Sur": {
+            "Davao City": [
+                "Agdao", "Alambre", "Alejandra Navarro", "Alfonso Angliongto Sr.",
+                "Angalan", "Atan-Awe", "Baganihan", "Bago Aplaya", "Bago Gallera",
+                "Bago Oshiro", "Baguio", "Balengaeng", "Baliok", "Bangkas Heights",
+                "Bantol", "Baracatan", "Barangay 1-A", "Barangay 2-A", "Barangay 3-A",
+                "Barangay 4-A", "Barangay 5-A", "Barangay 6-A", "Barangay 7-A",
+                "Barangay 8-A", "Barangay 9-A", "Barangay 10-A", "Barangay 11-B",
+                "Barangay 12-B", "Barangay 13-B", "Barangay 14-B", "Barangay 15-B",
+                "Barangay 16-B", "Barangay 17-B", "Barangay 18-B", "Barangay 19-B",
+                "Barangay 20-B", "Barangay 21-C", "Barangay 22-C", "Barangay 23-C",
+                "Barangay 24-C", "Barangay 25-C", "Barangay 26-C", "Barangay 27-C",
+                "Barangay 28-C", "Barangay 29-C", "Barangay 30-C", "Barangay 31-D",
+                "Barangay 32-D", "Barangay 33-D", "Barangay 34-D", "Barangay 35-D",
+                "Barangay 36-D", "Barangay 37-D", "Barangay 38-D", "Barangay 39-D",
+                "Barangay 40-D", "Buhangin", "Bunawan", "Cabantian", "Calinan",
+                "Callawa", "Catalunan Grande", "Catalunan Pequeño", "Communal",
+                "Crossing Bayabas", "Dacudao", "Dalag", "Daliaon Plantation",
+                "Damascus", "Dumoy", "Eden", "Fatima", "Gatungan", "Gov. Paciano Bangoy",
+                "Gov. Vicente Duterte", "Gumalang", "Indangan", "Kilate", "Lacson",
+                "Lamanan", "Langub", "Lapu-lapu", "Leon Garcia Sr.", "Lizada",
+                "Los Amigos", "Lubogan", "Lumiad", "Ma-a", "Mabuhay", "Malagos",
+                "Malamba", "Manambulan", "Mandug", "Manuel Guianga", "Mapula",
+                "Marapangi", "Marilog", "Matina Aplaya", "Matina Crossing",
+                "Matina Pangi", "Megkawayan", "Mintal", "Mudiang", "Mulig",
+                "New Carmen", "New Valencia", "Pampanga", "Panacan", "Pañabo",
+                "Paradise Embak", "Riverside", "Salapawan", "Saliducon", "Samo-Samo",
+                "San Antonio", "Santo Niño", "Sasa", "Sirib", "Sirawan",
+                "Tacunan", "Tagakpan", "Tagluno", "Tagurano", "Talomo",
+                "Talomonan", "Tamayong", "Tamugan", "Tapak", "Tawan-tawan",
+                "Tibuloy", "Tibungco", "Tigatto", "Toril", "Tugbok", "Tungkalan",
+                "Ubalde", "Ula", "Waan", "Wilfredo Aquino", "Wines",
+            ],
+            "Digos City": [
+                "Aplaya", "Balabag", "Binaton", "Cogon", "Colorado", "Dawis",
+                "Dulangan", "Goma", "Igpit", "Kapatagan", "Kiagot", "Lungag",
+                "Mahayahay", "Matti", "Ruparan", "San Agustin", "San Jose",
+                "San Miguel", "San Roque", "Sinawilan", "Soong", "Tiguman",
+                "Tres de Mayo", "Zone 1", "Zone 2", "Zone 3",
+            ],
+        },
+        "Davao del Norte": {
+            "Tagum City": [
+                "Apokon", "Bincungan", "Busaon", "Canocotan", "Cuambogan",
+                "La Filipina", "Liboganon", "Madaum", "Magdum", "Magugpo East",
+                "Magugpo North", "Magugpo Poblacion", "Magugpo South", "Magugpo West",
+                "Mankilam", "New Balamban", "Nueva Fuerza", "Pagsabangan",
+                "Pandapan", "San Agustin", "San Isidro", "San Miguel", "Visayan Village",
+            ],
+            "Panabo City": [
+                "A.O. Floirendo", "Buenavista", "Cacao", "Cagangohan", "Consolacion",
+                "Dapco", "Gredu", "J.P. Laurel", "Katipunan", "Kasilak",
+                "Langkilaan", "Lasang", "Mabunao", "Maduao", "Malativas",
+                "Manay", "Nanyo", "New Malaga", "New Panaon", "New Santiago",
+                "Quezon", "Salvacion", "San Francisco", "San Nicolas", "San Pedro",
+                "San Roque", "San Vicente", "Santo Niño", "Sindaton", "Southern Davao",
+                "Tibungol", "Upper Licanan", "Waterfall",
+            ],
+        },
+        "Davao de Oro": {
+            "Compostela": [
+                "Aurora", "Bagongon", "Cabiloyan", "Gaboc", "Gabi",
+                "Jose Rizal", "Mabuhay", "Magading", "Mamangan",
+                "Mangga", "Mozon", "New Leyte", "Osmeña",
+                "Poblacion", "San Jose", "San Miguel", "San Roque",
+                "Tagnocon", "Upper Sua",
+            ],
+            "Laak": [
+                "Aguinaldo", "Banbanon", "Binasbas", "Cebulida", "Concepcion",
+                "Datu Balong", "Datu Davao", "Datu Salumay", "Elibrado",
+                "Kapatagan", "Lam-it", "Langub", "Lianga", "Maharlika",
+                "Malinawon", "Mambayaan", "Melgar", "Napnapan", "Poblacion",
+                "San Antonio", "San Marcos", "San Vicente", "Santo Niño",
+            ],
+            "Mabini (Doña Alicia)": [
+                "Anitapan", "Cabasagan", "Gatpan", "Kadapa", "Langatian",
+                "Libasan", "Little Tanay", "Longganapan", "Maduao",
+                "Nabunwa", "New San Lazaro", "Panalisayan", "Poblacion",
+                "San Antonio", "Sampao", "San Jose", "San Pablo",
+            ],
+            "Maco": [
+                "Anibongan", "Anislagan", "Binuangan", "Dawak", "Don Panaca",
+                "Dumlan", "Guiwanon", "Kinuban", "Lawa", "Liban",
+                "Malamodao", "Mapanapan", "New Barili", "New Leyte",
+                "Panibasan", "Panoraon", "Poblacion", "San Miguel",
+                "San Roque", "Sangab", "Tagbaros", "Tinanogan", "Upper Ilao",
+            ],
+            "Maragusan (San Mariano)": [
+                "Bagong Silang", "Bat-og", "Binagong", "Camp 2", "Camp 3",
+                "Cebulida", "Kapatagan", "Lahi", "Lam-ag", "Linibunan",
+                "Mahaba", "Maharlika", "Mapawa", "Mauswagon", "New Albay",
+                "Poblacion", "San Roque","Talian","Tupaz","Victory",
+            ],
+            "Mawab": [
+                "Andili", "Bawani", "Bawing", "B. Melgar", "Cadayunan",
+                "Calamba", "Cone-sa", "Dawhan", "Divisoria", "Igabon",
+                "Linao", "Mabantao", "Malinawon", "Malita", "Nuevo Iloco",
+                "Poblacion", "Salvacion", "Saosao", "Sawangan", "Sawom",
+                "Sogo-sogo", "Sucod", "Tagbaros", "Tagmamarkay", "Tuburan",
+            ],
+            "Monkayo": [
+                "Awao", "Babag", "Banlag", "Baylo", "Basa", "Casoon",
+                "E. Manikop", "Tandang Sora", "Leveriza", "Macopa",
+                "Mamonga", "Mount Diwata (Diwalwal)", "Najos-Labid", "Olo",
+                "Oligopolistic Village", "Poblacion", "Rizal", "Salvacion",
+                "San Jose", "Tubo-tubo", "Upper Ulip", "Union",
+            ],
+            "Montevista": [
+                "Banagbanag", "Banglas", "Canidkid", "Sibucao", "Camansi",
+                "Casib-ang", "Cawayan", "Cutcutan", "Dauman", "Danag",
+                "Kamanlangan", "Liban", "Ligao", "Limboc", "Lub-a",
+                "Nalisan", "Poblacion", "Santa Cruz", "Tambobong", "Tapayan",
+            ],
+            "Nabunturan": [
+                "Anislagan", "Basak", "Bayabas", "Bukal", "Cameron",
+                "Candalapan", "Casig-ang", "Concepcion", "Inuas", "Katipunan",
+                "Loreto", "Luna", "Magangit", "Magugpo", "Mainit",
+                "Magsaysay", "New Cebu", "New Dauis", "New Davao", "New Leyte",
+                "New Pandan", "New Purok", "New Visayas", "Palencia",
+                "Pangi", "Poblacion", "San Miguel", "San Roque", "Sibulan",
+                "Tagnocon",
+            ],
+            "New Bataan": [
+                "Bantacan", "Bantawan", "Batang", "Bathan", "Binalgan",
+                "Cabinuangan", "Camanlangan", "Cabay’an", "Casahan", "Chiong-O",
+                "Dalangpan", "Inayagan", "Kahayag", "Kinuban", "Mabini",
+                "Magsaysay", "Magangit", "Manurigao", "Poblacion", "Salamanca",
+                "Sampao", "San Isidro", "San Jose", "San Roque", "Tandawan",
+            ],
+            "Pantukan": [
+                "Araibo", "Bongabong", "Camp 4", "Cabuacan", "Danawan",
+                "Dapnan", "Igangon", "Kingking", "Lahi", "Langaylangay",
+                "Magnaga", "Maibo", "P. Gomez", "Pandasan", "Poblacion",
+                "Sibahay", "Sibulan", "Tagdangua", "Tanglaw", "Tibal-og",
+            ],
+        },
+        "Davao Oriental": {
+            "Mati City": [
+                "Badas", "Bobon", "Buso", "Cabuaya", "Central", "Don Enrique Lopez",
+                "Don Martin Marundan", "Don Salvador Lopez Sr.", "Dawan", "Macambol",
+                "Magsaysay", "Matiao", "Mayo", "Sainz", "Sanghay", "Tagabakid",
+                "Tagbinonga", "Taguibo", "Tamisan",
+            ],
+        },
     },
     "Metro Manila (NCR)": {
-        "Manila": ["Binondo", "Ermita", "Intramuros", "Malate", "Paco",
-                   "Pandacan", "Port Area", "Quiapo", "Sampaloc", "San Andres",
-                   "San Miguel", "San Nicolas", "Santa Ana", "Santa Cruz",
-                   "Santa Mesa", "Tondo"],
-        "Quezon City": ["Alicia", "Bagong Buhay", "Bagong Pag-asa", "Bagong Silangan",
-                        "Batasan Hills", "Commonwealth", "Cubao", "Diliman",
-                        "Fairview", "Novaliches", "Payatas", "Project 4", "Project 6"],
-        "Makati": ["Bel-Air", "Cembo", "Comembo", "Dasmarinas Village", "Forbes Park",
-                   "Guadalupe Nuevo", "Guadalupe Viejo", "Legazpi Village",
-                   "Olympia", "Palanan", "Pembo", "Pinagkaisahan", "Poblacion",
-                   "Rockwell", "Salcedo Village", "San Lorenzo", "San Antonio"],
-        "Pasig": ["Bagong Ilog", "Bagong Katipunan", "Bambang", "Buting",
-                  "Caniogan", "Dela Paz", "Kapitolyo", "Malinao", "Manggahan",
-                  "Maybunga", "Ortigas Center", "Pineda", "Rosario", "Sagad",
-                  "San Antonio", "San Joaquin", "San Nicolas", "Santa Cruz",
-                  "Santa Rosa", "Santo Tomas", "Ugong"],
+        "Metro Manila": {
+            "Manila": ["Binondo", "Ermita", "Intramuros", "Malate", "Paco",
+                       "Pandacan", "Port Area", "Quiapo", "Sampaloc", "San Andres",
+                       "San Miguel", "San Nicolas", "Santa Ana", "Santa Cruz",
+                       "Santa Mesa", "Tondo"],
+            "Quezon City": ["Alicia", "Bagong Buhay", "Bagong Pag-asa", "Bagong Silangan",
+                            "Batasan Hills", "Commonwealth", "Cubao", "Diliman",
+                            "Fairview", "Novaliches", "Payatas", "Project 4", "Project 6"],
+            "Makati": ["Bel-Air", "Cembo", "Comembo", "Dasmarinas Village", "Forbes Park",
+                       "Guadalupe Nuevo", "Guadalupe Viejo", "Legazpi Village",
+                       "Olympia", "Palanan", "Pembo", "Pinagkaisahan", "Poblacion",
+                       "Rockwell", "Salcedo Village", "San Lorenzo", "San Antonio"],
+            "Pasig": ["Bagong Ilog", "Bagong Katipunan", "Bambang", "Buting",
+                      "Caniogan", "Dela Paz", "Kapitolyo", "Malinao", "Manggahan",
+                      "Maybunga", "Ortigas Center", "Pineda", "Rosario", "Sagad",
+                      "San Antonio", "San Joaquin", "San Nicolas", "Santa Cruz",
+                      "Santa Rosa", "Santo Tomas", "Ugong"],
+        },
     },
     "Central Visayas (VII)": {
-        "Cebu City": ["Adlaon", "Agsungot", "Apas", "Babag", "Bacayan",
-                      "Banilad", "Basak Pardo", "Basak San Nicolas", "Binaliw",
-                      "Bonbon", "Budlaan", "Buhisan", "Bulacao", "Buot-Taup",
-                      "Busay", "Calamba", "Cambinocot", "Capitol Site", "Carreta",
-                      "Central", "Cogon Pardo", "Cogon Ramos", "Day-as", "Duljo",
-                      "Ermita", "Guadalupe", "Guba", "Hippodromo", "Inayawan",
-                      "Kalubihan", "Kamundanan", "Kasambagan", "Kinasang-an",
-                      "Labangon", "Lahug", "Lorega", "Lusaran", "Luz", "Mabini",
-                      "Mabolo", "Malubog", "Mambaling", "Pahina Central",
-                      "Pahina San Nicolas", "Pamutan", "Pardo", "Pari-an",
-                      "Paril", "Pasil", "Pit-os", "Poblacion Pardo", "Pulangbato",
-                      "Pung-ol-Sibugay", "Punta Princesa", "Quiot Pardo",
-                      "Sambag I", "Sambag II", "San Antonio", "San Jose",
-                      "San Nicolas Central", "San Roque", "Santa Cruz",
-                      "Santo Niño", "Sapangdaku", "Sawang Calero", "Sinsin",
-                      "Sirao", "Sudlon I", "Sudlon II", "T. Padilla", "Tabunan",
-                      "Tagba-o", "Talamban", "Taptap", "Tejero", "Tinago",
-                      "Tisa", "To-ong Pardo", "Toong", "Zapatera"],
-        "Lapu-Lapu City": ["Agus", "Babag", "Bankal", "Baring", "Basak",
-                           "Buaya", "Calawisan", "Canjulao", "Caubian", "Caw-oy",
-                           "Cawhagan", "Gun-ob", "Ibo", "Looc", "Mactan", "Maribago",
-                           "Marigondon", "Pajo", "Pajod", "Pilipog", "Poblacion",
-                           "Punta Engaño", "Pusok", "Subabasbas", "Talima",
-                           "Tingo", "Tungasan"],
+        "Cebu": {
+            "Cebu City": ["Adlaon", "Agsungot", "Apas", "Babag", "Bacayan",
+                          "Banilad", "Basak Pardo", "Basak San Nicolas", "Binaliw",
+                          "Bonbon", "Budlaan", "Buhisan", "Bulacao", "Buot-Taup",
+                          "Busay", "Calamba", "Cambinocot", "Capitol Site", "Carreta",
+                          "Central", "Cogon Pardo", "Cogon Ramos", "Day-as", "Duljo",
+                          "Ermita", "Guadalupe", "Guba", "Hippodromo", "Inayawan",
+                          "Kalubihan", "Kamundanan", "Kasambagan", "Kinasang-an",
+                          "Labangon", "Lahug", "Lorega", "Lusaran", "Luz", "Mabini",
+                          "Mabolo", "Malubog", "Mambaling", "Pahina Central",
+                          "Pahina San Nicolas", "Pamutan", "Pardo", "Pari-an",
+                          "Paril", "Pasil", "Pit-os", "Poblacion Pardo", "Pulangbato",
+                          "Pung-ol-Sibugay", "Punta Princesa", "Quiot Pardo",
+                          "Sambag I", "Sambag II", "San Antonio", "San Jose",
+                          "San Nicolas Central", "San Roque", "Santa Cruz",
+                          "Santo Niño", "Sapangdaku", "Sawang Calero", "Sinsin",
+                          "Sirao", "Sudlon I", "Sudlon II", "T. Padilla", "Tabunan",
+                          "Tagba-o", "Talamban", "Taptap", "Tejero", "Tinago",
+                          "Tisa", "To-ong Pardo", "Toong", "Zapatera"],
+            "Lapu-Lapu City": ["Agus", "Babag", "Bankal", "Baring", "Basak",
+                               "Buaya", "Calawisan", "Canjulao", "Caubian", "Caw-oy",
+                               "Cawhagan", "Gun-ob", "Ibo", "Looc", "Mactan", "Maribago",
+                               "Marigondon", "Pajo", "Pajod", "Pilipog", "Poblacion",
+                               "Punta Engaño", "Pusok", "Subabasbas", "Talima",
+                               "Tingo", "Tungasan"],
+        },
     },
     "Northern Mindanao (X)": {
-        "Cagayan de Oro": ["Agusan", "Balubal", "Barangay 1", "Barangay 2",
-                           "Barangay 3", "Barangay 4", "Barangay 5", "Barangay 6",
-                           "Barangay 7", "Barangay 8", "Barangay 9", "Barangay 10",
-                           "Barangay 11", "Barangay 12", "Barangay 13", "Barangay 14",
-                           "Barangay 15", "Barangay 16", "Barangay 17", "Barangay 18",
-                           "Barangay 19", "Barangay 20", "Barangay 21", "Barangay 22",
-                           "Barangay 23", "Barangay 24", "Barangay 25", "Bayabas",
-                           "Bonbon", "Bulua", "Camaman-an", "Canitoan", "Carmen",
-                           "Consolacion", "Cugman", "Dansolihon", "F.S. Catanico",
-                           "Gusa", "Indahag", "Iponan", "Kauswagan", "Lapasan",
-                           "Lumbia", "Macabalan", "Macasandig", "Mambuaya",
-                           "Nazareth", "Pagalungan", "Pagatpat", "Patrocinio",
-                           "Pigsag-an", "Puerto", "Puntod", "San Simon", "Tablon",
-                           "Taglimao", "Tagpangi", "Tignapoloan", "Tuburan", "Tumpagon"],
-        "Iligan City": ["Abuno", "Acmac", "Bagong Silang", "Bonbonon", "Bunawan",
-                        "Buru-un", "Dalipuga", "Del Carmen", "Digkilaan", "Dulag",
-                        "Hinaplanon", "Hindang", "Kabacsanan", "Kalilangan",
-                        "Kiwalan", "Lanipao", "Luinab", "Mahayahay", "Mainit",
-                        "Mandulog", "Maria Cristina", "Pala-o", "Panoroganan",
-                        "Poblacion", "Puga-an", "Rogongon", "San Miguel",
-                        "San Roque", "Santa Elena", "Santa Filomena", "Santiago",
-                        "Santo Rosario", "Saray", "Suarez", "Tambacan",
-                        "Tibanga", "Tipanoy", "Tominobo Proper", "Tominobo Upper",
-                        "Tubod", "Ubaldo Laya", "Upper Hinaplanon", "Villa Verde"],
+        "Misamis Oriental": {
+            "Cagayan de Oro": ["Agusan", "Balubal", "Barangay 1", "Barangay 2",
+                               "Barangay 3", "Barangay 4", "Barangay 5", "Barangay 6",
+                               "Barangay 7", "Barangay 8", "Barangay 9", "Barangay 10",
+                               "Barangay 11", "Barangay 12", "Barangay 13", "Barangay 14",
+                               "Barangay 15", "Barangay 16", "Barangay 17", "Barangay 18",
+                               "Barangay 19", "Barangay 20", "Barangay 21", "Barangay 22",
+                               "Barangay 23", "Barangay 24", "Barangay 25", "Bayabas",
+                               "Bonbon", "Bulua", "Camaman-an", "Canitoan", "Carmen",
+                               "Consolacion", "Cugman", "Dansolihon", "F.S. Catanico",
+                               "Gusa", "Indahag", "Iponan", "Kauswagan", "Lapasan",
+                               "Lumbia", "Macabalan", "Macasandig", "Mambuaya",
+                               "Nazareth", "Pagalungan", "Pagatpat", "Patrocinio",
+                               "Pigsag-an", "Puerto", "Puntod", "San Simon", "Tablon",
+                               "Taglimao", "Tagpangi", "Tignapoloan", "Tuburan", "Tumpagon"],
+        },
+        "Lanao del Norte": {
+            "Iligan City": ["Abuno", "Acmac", "Bagong Silang", "Bonbonon", "Bunawan",
+                            "Buru-un", "Dalipuga", "Del Carmen", "Digkilaan", "Dulag",
+                            "Hinaplanon", "Hindang", "Kabacsanan", "Kalilangan",
+                            "Kiwalan", "Lanipao", "Luinab", "Mahayahay", "Mainit",
+                            "Mandulog", "Maria Cristina", "Pala-o", "Panoroganan",
+                            "Poblacion", "Puga-an", "Rogongon", "San Miguel",
+                            "San Roque", "Santa Elena", "Santa Filomena", "Santiago",
+                            "Santo Rosario", "Saray", "Suarez", "Tambacan",
+                            "Tibanga", "Tipanoy", "Tominobo Proper", "Tominobo Upper",
+                            "Tubod", "Ubaldo Laya", "Upper Hinaplanon", "Villa Verde"],
+        },
     },
 }
 
@@ -217,7 +308,7 @@ def run_purok_window():
     tree_card = tk.Frame(wrapper, bg=CARD,
                          highlightthickness=1, highlightbackground=BORDER)
     tree_card.grid(row=4, column=0, sticky="nsew", padx=26, pady=(0, 10))
-    tree_card.grid_rowconfigure(1, weight=1)
+    tree_card.grid_rowconfigure(3, weight=1)
     tree_card.grid_columnconfigure(0, weight=1)
 
     card_hdr = tk.Frame(tree_card, bg=CARD)
@@ -230,6 +321,52 @@ def run_purok_window():
     count_lbl = tk.Label(card_hdr, text="0 entries",
                          font=("Courier", 8), fg=MUTED, bg=CARD)
     count_lbl.grid(row=0, column=1, sticky="e")
+
+    # ── Search / Filter bar ───────────────────────────────────────────────────
+    search_frame = tk.Frame(tree_card, bg=CARD)
+    search_frame.grid(row=1, column=0, columnspan=2, sticky="ew",
+                      padx=16, pady=(0, 8))
+    search_frame.grid_columnconfigure(0, weight=1)
+
+    # Magnifying-glass icon label
+    search_icon = tk.Label(search_frame, text="🔍",
+                           font=("Segoe UI", 11), fg=MUTED, bg=CARD)
+    search_icon.grid(row=0, column=0, sticky="w", padx=(0, 6))
+
+    search_entry_wrap = tk.Frame(search_frame, bg=PANEL,
+                                  highlightthickness=1, highlightbackground=BORDER)
+    search_entry_wrap.grid(row=0, column=1, sticky="ew", padx=(0, 6))
+
+    search_var = tk.StringVar(value="")
+    search_entry = tk.Entry(search_entry_wrap,
+                            textvariable=search_var,
+                            bg=PANEL, fg=TEXT,
+                            font=("Courier", 10), relief="flat",
+                            insertbackground=ACCENT, bd=0)
+    search_entry.pack(fill="x", padx=10, pady=6)
+    search_entry.bind("<FocusIn>",
+                      lambda e: search_entry_wrap.config(highlightbackground=ACCENT))
+    search_entry.bind("<FocusOut>",
+                      lambda e: search_entry_wrap.config(highlightbackground=BORDER))
+
+    def clear_search():
+        search_var.set("")
+        search_entry.focus_set()
+        filter_puroks()
+
+    clear_btn = tk.Button(search_frame, text="✕",
+                          font=("Courier", 9, "bold"),
+                          bg=PANEL, fg=MUTED,
+                          activebackground=BORDER, activeforeground=TEXT,
+                          relief="flat", bd=0, cursor="hand2",
+                          command=clear_search, width=2)
+    clear_btn.grid(row=0, column=2, sticky="e", ipady=1)
+
+    # Hint label below search
+    hint_lbl = tk.Label(tree_card,
+                        text="Type to filter by name, province, city, or barangay",
+                        font=("Courier", 7), fg=MUTED, bg=CARD)
+    hint_lbl.grid(row=2, column=0, columnspan=2, sticky="w", padx=16, pady=(0, 6))
 
     # ttk style
     style = ttk.Style()
@@ -258,24 +395,24 @@ def run_purok_window():
     tree_scroll = tk.Scrollbar(tree_card, orient="vertical",
                                bg=BORDER, troughcolor=CARD,
                                width=6, relief="flat", highlightthickness=0)
-    tree_scroll.grid(row=1, column=1, sticky="ns", pady=(0, 10))
+    tree_scroll.grid(row=3, column=1, sticky="ns", pady=(0, 10))
 
     tree = ttk.Treeview(tree_card,
-                        columns=("ID", "Name", "Region", "City", "Barangay"),
+                        columns=("ID", "Name", "Province", "City", "Barangay"),
                         show="headings",
                         style="Custom.Treeview",
                         yscrollcommand=tree_scroll.set)
-    tree.heading("ID",        text="ID")
-    tree.heading("Name",      text="Purok Name")
-    tree.heading("Region",    text="Region")
-    tree.heading("City",      text="City / Municipality")
-    tree.heading("Barangay",  text="Barangay")
-    tree.column("ID",        width=40,  anchor="center", stretch=False)
-    tree.column("Name",      width=120, anchor="w",      stretch=True)
-    tree.column("Region",    width=130, anchor="w",      stretch=True)
-    tree.column("City",      width=120, anchor="w",      stretch=True)
-    tree.column("Barangay",  width=130, anchor="w",      stretch=True)
-    tree.grid(row=1, column=0, sticky="nsew", padx=(10, 0), pady=(0, 10))
+    tree.heading("ID",       text="ID")
+    tree.heading("Name",     text="Purok Name")
+    tree.heading("Province", text="Province")
+    tree.heading("City",     text="City / Municipality")
+    tree.heading("Barangay", text="Barangay")
+    tree.column("ID",       width=40,  anchor="center", stretch=False)
+    tree.column("Name",     width=120, anchor="w",      stretch=True)
+    tree.column("Province", width=130, anchor="w",      stretch=True)
+    tree.column("City",     width=120, anchor="w",      stretch=True)
+    tree.column("Barangay", width=130, anchor="w",      stretch=True)
+    tree.grid(row=3, column=0, sticky="nsew", padx=(10, 0), pady=(0, 10))
     tree_scroll.config(command=tree.yview)
     tree.tag_configure("odd",  background=PANEL)
     tree.tag_configure("even", background="#161a26")
@@ -297,18 +434,20 @@ def run_purok_window():
     # ── Location selection area ───────────────────────────────────────────────
     loc_frame = tk.Frame(add_card, bg=CARD)
     loc_frame.grid(row=1, column=0, sticky="ew", padx=16, pady=(10, 0))
-    loc_frame.grid_columnconfigure((0, 1, 2), weight=1)
+    loc_frame.grid_columnconfigure((0, 1, 2, 3), weight=1)
 
     def make_label(parent, text, col):
         tk.Label(parent, text=text,
                  font=("Courier", 7, "bold"),
                  fg=MUTED, bg=CARD).grid(row=0, column=col, sticky="w", padx=(0, 6))
 
-    make_label(loc_frame, "REGION / PROVINCE",  0)
-    make_label(loc_frame, "CITY / MUNICIPALITY", 1)
-    make_label(loc_frame, "BARANGAY",            2)
+    make_label(loc_frame, "REGION",  0)
+    make_label(loc_frame, "PROVINCE", 1)
+    make_label(loc_frame, "CITY / MUNICIPALITY", 2)
+    make_label(loc_frame, "BARANGAY",            3)
 
     region_var   = tk.StringVar(value="— select region —")
+    province_var = tk.StringVar(value="— select province —")
     city_var     = tk.StringVar(value="— select city —")
     barangay_var = tk.StringVar(value="— select barangay —")
 
@@ -325,10 +464,12 @@ def run_purok_window():
         return cb, wrap
 
     region_cb,   region_wrap   = styled_combo(loc_frame, region_var,   0)
-    city_cb,     city_wrap     = styled_combo(loc_frame, city_var,     1)
-    barangay_cb, barangay_wrap = styled_combo(loc_frame, barangay_var, 2)
+    province_cb, province_wrap = styled_combo(loc_frame, province_var, 1)
+    city_cb,     city_wrap     = styled_combo(loc_frame, city_var,     2)
+    barangay_cb, barangay_wrap = styled_combo(loc_frame, barangay_var, 3)
 
     region_cb["values"]   = list(PH_LOCATIONS.keys())
+    province_cb["values"] = []
     city_cb["values"]     = []
     barangay_cb["values"] = []
 
@@ -337,21 +478,35 @@ def run_purok_window():
     badge_lbl = tk.Label(loc_frame, textvariable=badge_var,
                          font=("Courier", 8), fg=SUCCESS, bg=CARD,
                          anchor="w")
-    badge_lbl.grid(row=2, column=0, columnspan=3, sticky="w", pady=(5, 0))
+    badge_lbl.grid(row=2, column=0, columnspan=4, sticky="w", pady=(5, 0))
 
     def update_badge():
         r = region_var.get()
+        p = province_var.get()
         c = city_var.get()
         b = barangay_var.get()
         parts = []
         if r and not r.startswith("—"): parts.append(r)
+        if p and not p.startswith("—"): parts.append(p)
         if c and not c.startswith("—"): parts.append(c)
         if b and not b.startswith("—"): parts.append(b)
         badge_var.set("📍 " + " › ".join(parts) if parts else "")
 
     def on_region_change(event=None):
         region = region_var.get()
-        cities = list(PH_LOCATIONS.get(region, {}).keys())
+        provinces = list(PH_LOCATIONS.get(region, {}).keys())
+        province_var.set("— select province —")
+        city_var.set("— select city —")
+        barangay_var.set("— select barangay —")
+        province_cb["values"] = provinces
+        city_cb["values"]     = []
+        barangay_cb["values"] = []
+        update_badge()
+
+    def on_province_change(event=None):
+        region   = region_var.get()
+        province = province_var.get()
+        cities   = list(PH_LOCATIONS.get(region, {}).get(province, {}).keys())
         city_var.set("— select city —")
         barangay_var.set("— select barangay —")
         city_cb["values"]     = cities
@@ -359,9 +514,10 @@ def run_purok_window():
         update_badge()
 
     def on_city_change(event=None):
-        region = region_var.get()
-        city   = city_var.get()
-        brgys  = PH_LOCATIONS.get(region, {}).get(city, [])
+        region   = region_var.get()
+        province = province_var.get()
+        city     = city_var.get()
+        brgys    = PH_LOCATIONS.get(region, {}).get(province, {}).get(city, [])
         barangay_var.set("— select barangay —")
         barangay_cb["values"] = brgys
         update_badge()
@@ -370,6 +526,7 @@ def run_purok_window():
         update_badge()
 
     region_cb.bind("<<ComboboxSelected>>",   on_region_change)
+    province_cb.bind("<<ComboboxSelected>>", on_province_change)
     city_cb.bind("<<ComboboxSelected>>",     on_city_change)
     barangay_cb.bind("<<ComboboxSelected>>", on_barangay_change)
 
@@ -455,19 +612,19 @@ def run_purok_window():
     arch_scroll.grid(row=1, column=1, sticky="ns", pady=(0, 8))
 
     arch_tree = ttk.Treeview(arch_card,
-                              columns=("ID", "Name", "Region", "City", "Barangay"),
+                              columns=("ID", "Name", "Province", "City", "Barangay"),
                               show="headings",
                               style="Custom.Treeview",
                               height=4,
                               yscrollcommand=arch_scroll.set)
     arch_tree.heading("ID",       text="ID")
     arch_tree.heading("Name",     text="Purok Name")
-    arch_tree.heading("Region",   text="Region")
+    arch_tree.heading("Province", text="Province")
     arch_tree.heading("City",     text="City / Municipality")
     arch_tree.heading("Barangay", text="Barangay")
     arch_tree.column("ID",       width=40,  anchor="center", stretch=False)
     arch_tree.column("Name",     width=120, anchor="w",      stretch=True)
-    arch_tree.column("Region",   width=120, anchor="w",      stretch=True)
+    arch_tree.column("Province", width=120, anchor="w",      stretch=True)
     arch_tree.column("City",     width=110, anchor="w",      stretch=True)
     arch_tree.column("Barangay", width=120, anchor="w",      stretch=True)
     arch_tree.grid(row=1, column=0, sticky="nsew", padx=(10, 0), pady=(0, 8))
@@ -486,6 +643,32 @@ def run_purok_window():
              font=("Courier", 7), fg=BORDER, bg=BG).grid(row=9, column=0, pady=(2, 10))
 
     # ── Logic ─────────────────────────────────────────────────────────────────
+    _all_puroks_cache = []
+
+    def filter_puroks(event=None):
+        """Re-filter the treeview based on search text."""
+        q = search_var.get().strip().lower()
+        if not q:
+            refresh_puroks()
+            return
+        for row in tree.get_children():
+            tree.delete(row)
+        matched = []
+        for p in _all_puroks_cache:
+            vals = [str(v).lower() for v in p[:5]]
+            if any(q in v for v in vals):
+                matched.append(p)
+        for i, p in enumerate(matched):
+            tag = "odd" if i % 2 == 0 else "even"
+            if len(p) >= 5:
+                tree.insert("", "end", values=p[:5], tags=(tag,))
+            else:
+                tree.insert("", "end",
+                            values=(p[0], p[1], "—", "—", "—"), tags=(tag,))
+        count_lbl.config(text=f"{len(matched)} of {len(_all_puroks_cache)} entr{'y' if len(matched)==1 else 'ies'}")
+
+    search_entry.bind("<KeyRelease>", filter_puroks)
+
     def refresh_archived():
         for row in arch_tree.get_children():
             arch_tree.delete(row)
@@ -577,12 +760,14 @@ def run_purok_window():
     arch_tree.bind("<Button-2>", _show_arch_menu)
 
     def refresh_puroks():
+        nonlocal _all_puroks_cache
         for row in tree.get_children():
             tree.delete(row)
         puroks = database.get_puroks()
+        _all_puroks_cache = puroks[:]
         for i, p in enumerate(puroks):
             tag = "odd" if i % 2 == 0 else "even"
-            # p may be (id, name) or (id, name, region, city, barangay)
+            # p may be (id, name) or (id, name, province, city, barangay)
             if len(p) >= 5:
                 tree.insert("", "end", values=p[:5], tags=(tag,))
             else:
@@ -594,6 +779,7 @@ def run_purok_window():
     def add_purok(event=None):
         name     = purok_entry.get().strip()
         region   = region_var.get()
+        province = province_var.get()
         city     = city_var.get()
         barangay = barangay_var.get()
 
@@ -602,7 +788,7 @@ def run_purok_window():
             return
 
         # Warn but don't block if location is incomplete
-        if region.startswith("—") or city.startswith("—") or barangay.startswith("—"):
+        if region.startswith("—") or province.startswith("—") or city.startswith("—") or barangay.startswith("—"):
             proceed = messagebox.askyesno(
                 "Incomplete Location",
                 "Location is not fully set.\nSave purok without full location?")
@@ -610,21 +796,19 @@ def run_purok_window():
                 return
 
         # Sanitise placeholder strings to empty
-        reg_val = "" if region.startswith("—")   else region
-        cit_val = "" if city.startswith("—")     else city
-        brg_val = "" if barangay.startswith("—") else barangay
+        reg_val = "" if region.startswith("—")      else region
+        prv_val = "" if province.startswith("—")    else province
+        cit_val = "" if city.startswith("—")        else city
+        brg_val = "" if barangay.startswith("—")    else barangay
 
-        # database.add_purok supports (name) or (name, region, city, barangay)
-        try:
-            database.add_purok(name, reg_val, cit_val, brg_val)
-        except TypeError:
-            # Fallback if the DB function only accepts name
-            database.add_purok(name)
+        database.add_purok(name, reg_val, prv_val, cit_val, brg_val)
 
         purok_entry.delete(0, tk.END)
         region_var.set("— select region —")
+        province_var.set("— select province —")
         city_var.set("— select city —")
         barangay_var.set("— select barangay —")
+        province_cb["values"] = []
         city_cb["values"]     = []
         barangay_cb["values"] = []
         badge_var.set("")
