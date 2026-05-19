@@ -35,5 +35,5 @@ exe = EXE(
     target_arch=None,
     codesign_identity=None,
     entitlements_file=None,
-    icon=['rims_icon.ico'],
+    icon=['assets\\rims_icon.ico'],
 )
