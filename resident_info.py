@@ -10,19 +10,6 @@ try:
 except ImportError:
     PIL_OK = False
 
-# ── Palette ───────────────────────────────────────────────────────────────────
-BG      = "#0b0d14"
-CARD    = "#11141f"
-PANEL   = "#181c2a"
-BORDER  = "#252c42"
-ACCENT  = "#4f8ef7"
-ACCENT2 = "#7c5cfc"
-SUCCESS = "#4fc97e"
-DANGER  = "#f74f6a"
-WARN    = "#f7a94f"
-TEXT    = "#e8ecf4"
-MUTED   = "#6b7490"
-
 PHOTOS_DIR = "resident_photos"
 
 
@@ -115,6 +102,11 @@ def open_resident_info(parent, resident_row, purok_name,
     full_name  = f"{fn} {ln}"
     _cur_photo = [photo_path]
 
+    import theme as _t
+    BG = _t.BG; CARD = _t.CARD; PANEL = _t.PANEL; BORDER = _t.BORDER
+    ACCENT = _t.ACCENT; ACCENT2 = _t.ACCENT2; SUCCESS = _t.SUCCESS
+    DANGER = _t.DANGER; WARN = _t.WARN; TEXT = _t.TEXT; MUTED = _t.MUTED
+
     st_color = {"Registered": SUCCESS,
                 "Pending":    WARN,
                 "Inactive":   DANGER}.get(status, MUTED)
@@ -141,19 +133,19 @@ def open_resident_info(parent, resident_row, purok_name,
     hdr.pack(fill="x")
 
     tk.Label(hdr, text="▸  RESIDENT PROFILE",
-             font=("Courier", 9, "bold"),
+             font=_t.font("Courier", 9, "bold"),
              fg=ACCENT, bg=CARD).pack(side="left", padx=16, pady=10)
 
     # ID chip
     tk.Label(hdr, text=f"  ID {rid:03d}  ",
-             font=("Courier", 8, "bold"),
+             font=_t.font("Courier", 8, "bold"),
              fg=MUTED, bg=PANEL).pack(side="left", pady=10)
 
     # Status badge
     badge_f = tk.Frame(hdr, bg=st_color)
     badge_f.pack(side="right", padx=16, pady=8, ipadx=10, ipady=3)
     tk.Label(badge_f, text=f"● {status.upper()}",
-             font=("Courier", 8, "bold"),
+             font=_t.font("Courier", 8, "bold"),
              fg="white", bg=st_color).pack()
 
     # ── Body ──────────────────────────────────────────────────────
@@ -208,18 +200,18 @@ def open_resident_info(parent, resident_row, purok_name,
             ring_c.create_oval(5, 5, ring_size - 5, ring_size - 5,
                                fill=PANEL, outline=BORDER, width=2)
             ring_c.create_text(ring_size // 2, ring_size // 2,
-                               text="👤", font=("Segoe UI Emoji", 36),
+                               text="👤", font=_t.font("Segoe UI Emoji", 36),
                                fill=MUTED)
 
     _render_photo()
 
     # Name & ID
     tk.Label(left, text=full_name,
-             font=("Georgia", 13, "bold"),
+             font=_t.font("Georgia", 13, "bold"),
              fg=TEXT, bg=CARD,
              wraplength=190, justify="center").pack(pady=(8, 0), padx=8)
     tk.Label(left, text=f"#{rid:03d}  ·  {purok_name}",
-             font=("Courier", 8),
+             font=_t.font("Courier", 8),
              fg=MUTED, bg=CARD).pack(pady=(2, 0))
 
     # ── Gender / age chips ────────────────────────────────────────
@@ -229,7 +221,7 @@ def open_resident_info(parent, resident_row, purok_name,
     def _chip(parent, text, color):
         f = tk.Frame(parent, bg=color)
         f.pack(side="left", padx=3, ipadx=6, ipady=2)
-        tk.Label(f, text=text, font=("Courier", 7, "bold"),
+        tk.Label(f, text=text, font=_t.font("Courier", 7, "bold"),
                  fg="white", bg=color).pack()
 
     try:
@@ -247,7 +239,7 @@ def open_resident_info(parent, resident_row, purok_name,
     tk.Frame(left, bg=BORDER, height=1).pack(fill="x", padx=14, pady=(14, 8))
 
     tk.Label(left, text="▸  PHOTO",
-             font=("Courier", 7, "bold"),
+             font=_t.font("Courier", 7, "bold"),
              fg=ACCENT, bg=CARD).pack(anchor="w", padx=14)
 
     btn_area = tk.Frame(left, bg=CARD)
@@ -314,7 +306,7 @@ def open_resident_info(parent, resident_row, purok_name,
                          command=_browse_and_update,
                          bg=PANEL, fg=ACCENT,
                          activebackground=BORDER, activeforeground=TEXT,
-                         font=("Courier", 8, "bold"),
+                         font=_t.font("Courier", 8, "bold"),
                          relief="flat", bd=0, cursor="hand2",
                          highlightthickness=1, highlightbackground=BORDER)
     browse_b.grid(row=0, column=0, sticky="ew", padx=(0, 3), ipady=6)
@@ -324,7 +316,7 @@ def open_resident_info(parent, resident_row, purok_name,
                       command=_open_cam,
                       bg=PANEL, fg=ACCENT2,
                       activebackground=BORDER, activeforeground=TEXT,
-                      font=("Courier", 8, "bold"),
+                      font=_t.font("Courier", 8, "bold"),
                       relief="flat", bd=0, cursor="hand2",
                       highlightthickness=1, highlightbackground=BORDER)
     cam_b.grid(row=0, column=1, sticky="ew", padx=(3, 0), ipady=6)
@@ -335,7 +327,7 @@ def open_resident_info(parent, resident_row, purok_name,
         b.bind("<Leave>", lambda e, btn=b: btn.config(bg=PANEL, fg=ACCENT
                           if btn is browse_b else ACCENT2))
 
-    photo_note = tk.Label(left, text="", font=("Courier", 7),
+    photo_note = tk.Label(left, text="", font=_t.font("Courier", 7),
                           fg=MUTED, bg=CARD)
     photo_note.pack(pady=(4, 0))
 
@@ -366,7 +358,7 @@ def open_resident_info(parent, resident_row, purok_name,
 
     def section(title):
         tk.Label(inner, text=f"▸  {title}",
-                 font=("Courier", 8, "bold"),
+                 font=_t.font("Courier", 8, "bold"),
                  fg=ACCENT, bg=CARD).grid(
                      row=row_i[0], column=0, columnspan=2,
                      sticky="w", padx=20, pady=(16, 4))
@@ -378,13 +370,13 @@ def open_resident_info(parent, resident_row, purok_name,
 
     def detail(label, value, color=TEXT):
         tk.Label(inner, text=label,
-                 font=("Courier", 8, "bold"),
+                 font=_t.font("Courier", 8, "bold"),
                  fg=MUTED, bg=CARD,
                  width=13, anchor="w").grid(
                      row=row_i[0], column=0,
                      sticky="w", padx=(20, 4), pady=5)
         tk.Label(inner, text=str(value) if value else "—",
-                 font=("Courier", 11, "bold"),
+                 font=_t.font("Courier", 11, "bold"),
                  fg=color, bg=CARD, anchor="w").grid(
                      row=row_i[0], column=1,
                      sticky="w", padx=(0, 20), pady=5)
@@ -444,7 +436,7 @@ def open_resident_info(parent, resident_row, purok_name,
               command=win.destroy,
               bg=PANEL, fg=MUTED,
               activebackground=BORDER, activeforeground=TEXT,
-              font=("Courier", 9, "bold"),
+              font=_t.font("Courier", 9, "bold"),
               relief="flat", bd=0, cursor="hand2").pack(
                   side="right", ipady=7, ipadx=16)
 

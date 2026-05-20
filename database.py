@@ -202,3 +202,52 @@ def get_resident_by_id(resident_id):
 def count_residents():
     with get_connection() as conn:
         return conn.execute("SELECT COUNT(*) FROM residents").fetchone()[0]
+
+
+def get_gender_distribution() -> list:
+    """Return list of (gender, count) for residents grouped by gender."""
+    with get_connection() as conn:
+        return conn.execute(
+            "SELECT COALESCE(NULLIF(gender,''), 'Other') as g, COUNT(*) "
+            "FROM residents GROUP BY g ORDER BY COUNT(*) DESC"
+        ).fetchall()
+
+
+def get_status_distribution() -> list:
+    """Return list of (status, count) for residents grouped by status."""
+    with get_connection() as conn:
+        return conn.execute(
+            "SELECT COALESCE(NULLIF(status,''), 'Registered') as s, COUNT(*) "
+            "FROM residents GROUP BY s ORDER BY COUNT(*) DESC"
+        ).fetchall()
+
+
+def get_age_group_distribution() -> list:
+    """Return list of (age_group, count) using age brackets."""
+    with get_connection() as conn:
+        rows = conn.execute(
+            "SELECT CAST(age AS INTEGER) FROM residents WHERE age IS NOT NULL AND age != ''"
+        ).fetchall()
+    buckets = {"0-17": 0, "18-30": 0, "31-45": 0, "46-60": 0, "60+": 0}
+    for (age,) in rows:
+        try:
+            a = int(age)
+            if a < 18:       buckets["0-17"]  += 1
+            elif a < 31:     buckets["18-30"] += 1
+            elif a < 46:     buckets["31-45"] += 1
+            elif a < 60:     buckets["46-60"] += 1
+            else:            buckets["60+"]   += 1
+        except (ValueError, TypeError):
+            pass
+    return list(buckets.items())
+
+
+def get_full_dashboard_stats() -> dict:
+    """Return a dict with all dashboard stats in one call."""
+    return {
+        "total":      count_residents(),
+        "puroks":     count_puroks(),
+        "gender":     get_gender_distribution(),
+        "status":     get_status_distribution(),
+        "age_groups": get_age_group_distribution(),
+    }

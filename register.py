@@ -7,17 +7,11 @@ from logo import make_logo_canvas
 def run_register(return_to_login):
     users_database.create_users_table()
 
-    # ── Palette ──────────────────────────────────────────────────────────────
-    BG        = "#0d0f14"
-    CARD      = "#13161e"
-    PANEL     = "#1a1e2b"
-    BORDER    = "#2a2f42"
-    ACCENT    = "#4f8ef7"
-    ACCENT2   = "#7c5cfc"
-    TEXT      = "#e8ecf4"
-    MUTED     = "#6b7490"
-    SUCCESS   = "#4fc97e"
-    DANGER    = "#f74f6a"
+    import theme as _font
+    BG = _font.BG; CARD = _font.CARD; PANEL = _font.PANEL
+    BORDER = _font.BORDER; ACCENT = _font.ACCENT; ACCENT2 = _font.ACCENT2
+    SUCCESS = _font.SUCCESS; DANGER = _font.DANGER
+    TEXT = _font.TEXT; MUTED = _font.MUTED
 
     # ── Root window ──────────────────────────────────────────────────────────
     root = tk.Tk()
@@ -76,14 +70,14 @@ def run_register(return_to_login):
     heading_frame.pack(pady=(16, 2), padx=36, anchor="w")
 
     tk.Label(heading_frame, text="Create",
-             font=("Georgia", 24, "bold"),
+             font=_font.font("Georgia", 24, "bold"),
              fg=TEXT, bg=BG).pack(side="left")
     tk.Label(heading_frame, text=" Account",
-             font=("Georgia", 24, "italic"),
+             font=_font.font("Georgia", 24, "italic"),
              fg=ACCENT, bg=BG).pack(side="left")
 
     tk.Label(scroll_frame, text="Fill in your details below to get started",
-             font=("Courier", 9),
+             font=_font.font("Courier", 9),
              fg=MUTED, bg=BG).pack(anchor="w", padx=36, pady=(0, 16))
 
     # ── Card container ───────────────────────────────────────────────────────
@@ -97,7 +91,7 @@ def run_register(return_to_login):
         row = tk.Frame(parent, bg=CARD)
         row.pack(fill="x", padx=18, pady=(14, 0))
         tk.Label(row, text="▸ " + text,
-                 font=("Courier", 8, "bold"),
+                 font=_font.font("Courier", 8, "bold"),
                  fg=ACCENT, bg=CARD).pack(side="left")
         tk.Frame(row, bg=BORDER, height=1).pack(
             side="left", fill="x", expand=True, padx=(8, 0), pady=6)
@@ -110,7 +104,7 @@ def run_register(return_to_login):
         wrap.pack(fill="x", padx=18, pady=5)
 
         tk.Label(wrap, text=key,
-                 font=("Courier", 8, "bold"),
+                 font=_font.font("Courier", 8, "bold"),
                  fg=MUTED, bg=CARD).pack(anchor="w")
 
         inner = tk.Frame(wrap, bg=PANEL,
@@ -120,7 +114,7 @@ def run_register(return_to_login):
 
         entry = tk.Entry(inner, show=show,
                          bg=PANEL, fg=TEXT,
-                         font=("Courier", 10),
+                         font=_font.font("Courier", 10),
                          relief="flat",
                          insertbackground=ACCENT,
                          bd=0)
@@ -146,12 +140,15 @@ def run_register(return_to_login):
     make_entry(card, "Username")
     make_entry(card, "Password", show="●")
 
+    section_label(card, "REGISTRATION CODE")
+    make_entry(card, "Registration Code", show="●")
+
     section_label(card, "ROLE")
 
     role_wrap = tk.Frame(card, bg=CARD)
     role_wrap.pack(fill="x", padx=18, pady=5)
     tk.Label(role_wrap, text="Role",
-             font=("Courier", 8, "bold"),
+             font=_font.font("Courier", 8, "bold"),
              fg=MUTED, bg=CARD).pack(anchor="w")
 
     role_var = tk.StringVar(value="Select Role")
@@ -162,10 +159,11 @@ def run_register(return_to_login):
     role_inner.pack(fill="x", pady=(2, 0))
 
     role_dropdown = tk.OptionMenu(role_inner, role_var,
-                                  "Barangay Official", "Barangay Worker")
+                                  "Barangay Worker", "Staff",
+                                  "Barangay Official", "Admin")
     role_dropdown.config(
         bg=PANEL, fg=TEXT,
-        font=("Courier", 10),
+        font=_font.font("Courier", 10),
         relief="flat", bd=0,
         activebackground=ACCENT,
         activeforeground=TEXT,
@@ -174,7 +172,7 @@ def run_register(return_to_login):
     )
     role_dropdown["menu"].config(
         bg=PANEL, fg=TEXT,
-        font=("Courier", 10),
+        font=_font.font("Courier", 10),
         relief="flat",
         activebackground=ACCENT,
         activeforeground="white"
@@ -191,22 +189,49 @@ def run_register(return_to_login):
         phone      = entries["Phone"].get().strip()
         username   = entries["Username"].get().strip()
         password   = entries["Password"].get().strip()
+        reg_code   = entries["Registration Code"].get().strip()
         role       = role_var.get()
 
         if not all([first_name, last_name, email, phone, username, password]):
             messagebox.showwarning("Missing Fields", "All fields are required.")
             return
 
-        if role not in ["Barangay Official", "Barangay Worker"]:
-            messagebox.showerror("Access Denied",
-                                 "Only Barangay Officials or Workers can create an account.")
+        # Validate registration code
+        stored_code = users_database.get_registration_code()
+        if reg_code != stored_code:
+            messagebox.showerror(
+                "Invalid Code",
+                "The registration code is incorrect.\n"
+                "Contact your Barangay Admin for the correct code."
+            )
+            return
+
+        valid_roles = users_database.ROLES
+        if role not in valid_roles:
+            messagebox.showerror("Invalid Role",
+                                 "Please select a valid role.")
             return
 
         try:
             users_database.add_user(username, password,
-                                    first_name, last_name, email, phone)
-            messagebox.showinfo("Success",
-                                f"Account created successfully as {role}!")
+                                    first_name, last_name, email, phone,
+                                    role=role)
+
+            # Check if the account was auto-approved (first admin) or pending
+            if users_database.check_login_status(username, password) == "approved":
+                messagebox.showinfo(
+                    "Account Created",
+                    f"Welcome! Your account has been created as {role}.\n"
+                    "You can now log in."
+                )
+            else:
+                messagebox.showinfo(
+                    "Account Pending Approval",
+                    f"Your account has been created as {role}.\n\n"
+                    "An admin must approve your account before you can log in.\n"
+                    "Please wait for approval."
+                )
+
             root.destroy()
             return_to_login()
         except Exception:
@@ -225,7 +250,7 @@ def run_register(return_to_login):
         text="CREATE ACCOUNT  →",
         command=create_account,
         bg=ACCENT, fg="white",
-        font=("Courier", 10, "bold"),
+        font=_font.font("Courier", 10, "bold"),
         activebackground="#3a7ce8",
         activeforeground="white",
         relief="flat", bd=0,
@@ -245,7 +270,7 @@ def run_register(return_to_login):
         text="← Back to Login",
         command=go_back,
         bg=BG, fg=MUTED,
-        font=("Courier", 9),
+        font=_font.font("Courier", 9),
         activebackground=PANEL,
         activeforeground=TEXT,
         relief="flat", bd=0,
@@ -255,7 +280,7 @@ def run_register(return_to_login):
 
     tk.Label(scroll_frame,
              text="© Barangay Management System  ·  v1.0",
-             font=("Courier", 7),
+             font=_font.font("Courier", 7),
              fg=BORDER, bg=BG).pack(pady=(0, 14))
 
     root.mainloop()

@@ -25,14 +25,23 @@ def ensure_photos_dir():
 
 
 def open_camera_window(parent, on_photo_taken,
-                       bg="#11141f", accent="#4f8ef7",
-                       panel="#181c2a", border="#252c42",
-                       text="#e8ecf4", muted="#6b7490",
-                       success="#4fc97e", danger="#f74f6a"):
+                       bg=None, accent=None,
+                       panel=None, border=None,
+                       text=None, muted=None,
+                       success=None, danger=None):
     """
     Opens a popup camera window.
     on_photo_taken(filepath) is called with the saved image path.
     """
+    import theme as _t
+    if bg is None: bg = _t.CARD
+    if accent is None: accent = _t.ACCENT
+    if panel is None: panel = _t.PANEL
+    if border is None: border = _t.BORDER
+    if text is None: text = _t.TEXT
+    if muted is None: muted = _t.MUTED
+    if success is None: success = _t.SUCCESS
+    if danger is None: danger = _t.DANGER
     ensure_photos_dir()
 
     if not PIL_OK:
@@ -66,10 +75,10 @@ def open_camera_window(parent, on_photo_taken,
     title_frame = tk.Frame(header_row, bg=bg)
     title_frame.grid(row=0, column=0, sticky="w")
     tk.Label(title_frame, text="📷  CAPTURE RESIDENT PHOTO",
-             font=("Courier", 10, "bold"),
+             font=_t.font("Courier", 10, "bold"),
              fg=accent, bg=bg).pack(anchor="w")
     tk.Label(title_frame, text="Position the resident in the frame and press Capture",
-             font=("Courier", 8),
+             font=_t.font("Courier", 8),
              fg=muted, bg=bg).pack(anchor="w")
 
     # Browse button (upper right)
@@ -109,7 +118,7 @@ def open_camera_window(parent, on_photo_taken,
             feed_lbl._img = imgtk
         except Exception:
             feed_lbl.config(text="📁  Photo loaded", fg=accent,
-                           font=("Courier", 14, "bold"), compound="center")
+                           font=_t.font("Courier", 14, "bold"), compound="center")
 
         _state["captured"] = True
         _state["capture_path"] = dest_path
@@ -125,7 +134,7 @@ def open_camera_window(parent, on_photo_taken,
                            bg=panel, fg=accent,
                            activebackground=border,
                            activeforeground="white",
-                           font=("Courier", 8, "bold"),
+                           font=_t.font("Courier", 8, "bold"),
                            relief="flat", bd=0, cursor="hand2",
                            highlightthickness=1, highlightbackground=border,
                            padx=10, pady=4)
@@ -154,13 +163,13 @@ def open_camera_window(parent, on_photo_taken,
         if not CV2_OK:
             feed_lbl.config(
                 text="⚠ No camera found.\nConnect a webcam and try again.",
-                fg=danger, font=("Courier", 10), compound="center")
+                fg=danger, font=_t.font("Courier", 10), compound="center")
             return
         cap = cv2.VideoCapture(0)
         if not cap.isOpened():
             feed_lbl.config(
                 text="⚠ No camera found.\nConnect a webcam and try again.",
-                fg=danger, font=("Courier", 10), compound="center")
+                fg=danger, font=_t.font("Courier", 10), compound="center")
             return
         _state["cap"] = cap
         _state["running"] = True
@@ -247,7 +256,7 @@ def open_camera_window(parent, on_photo_taken,
                             command=capture,
                             bg=accent, fg="white",
                             activebackground="#3a7ce8",
-                            font=("Courier", 9, "bold"),
+                            font=_t.font("Courier", 9, "bold"),
                             relief="flat", bd=0, cursor="hand2")
     capture_btn.pack(side="left", padx=6, ipady=8, ipadx=16)
 
@@ -255,7 +264,7 @@ def open_camera_window(parent, on_photo_taken,
                            command=retake,
                            bg=panel, fg=muted,
                            activebackground=border,
-                           font=("Courier", 9, "bold"),
+                           font=_t.font("Courier", 9, "bold"),
                            relief="flat", bd=0, cursor="hand2",
                            state="disabled")
     retake_btn.pack(side="left", padx=6, ipady=8, ipadx=16)
@@ -264,7 +273,7 @@ def open_camera_window(parent, on_photo_taken,
                             command=confirm,
                             bg=panel, fg=muted,
                             activebackground=border,
-                            font=("Courier", 9, "bold"),
+                            font=_t.font("Courier", 9, "bold"),
                             relief="flat", bd=0, cursor="hand2",
                             state="disabled")
     confirm_btn.pack(side="left", padx=6, ipady=8, ipadx=16)
@@ -273,11 +282,11 @@ def open_camera_window(parent, on_photo_taken,
               command=on_close,
               bg=panel, fg=danger,
               activebackground=border,
-              font=("Courier", 9, "bold"),
+              font=_t.font("Courier", 9, "bold"),
               relief="flat", bd=0, cursor="hand2").pack(
                   side="left", padx=6, ipady=8, ipadx=16)
 
-    status_lbl = tk.Label(win, text="", font=("Courier", 8),
+    status_lbl = tk.Label(win, text="", font=_t.font("Courier", 8),
                           fg=success, bg=bg)
     status_lbl.pack(pady=(4, 0))
 

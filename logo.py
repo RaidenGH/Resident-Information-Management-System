@@ -15,19 +15,12 @@ import tkinter as tk
 #      draw_logo(existing_canvas, x=20, y=20, scale=0.8)
 # ─────────────────────────────────────────────────────────────────
 
-ACCENT  = "#4f8ef7"
-ACCENT2 = "#7c5cfc"
-SUCCESS = "#4fc97e"
-BG      = "#0d0f14"
-CARD    = "#13161e"
-BORDER  = "#2a2f42"
-TEXT    = "#e8ecf4"
-MUTED   = "#6b7490"
-PANEL   = "#1a1e2b"
-
-
 def draw_logo(canvas, x=0, y=0, scale=1.0):
     """Draw the RIMS logo onto an existing canvas at offset (x, y)."""
+    import theme
+    ACCENT = theme.ACCENT; ACCENT2 = theme.ACCENT2; SUCCESS = theme.SUCCESS
+    BG = theme.BG; CARD = theme.CARD; BORDER = theme.BORDER
+    TEXT = theme.TEXT; MUTED = theme.MUTED; PANEL = theme.PANEL
 
     def s(v):
         return v * scale
@@ -118,19 +111,19 @@ def draw_logo(canvas, x=0, y=0, scale=1.0):
 
     canvas.create_text(wx, wy,
                        text="R",
-                       font=("Georgia", fs, "bold"),
+                       font=theme.font("Georgia", fs, "bold"),
                        fill=TEXT, anchor="w")
 
     r_width = int(fs * 0.68)
     canvas.create_text(wx + r_width, wy,
                        text="I",
-                       font=("Georgia", fs, "bold italic"),
+                       font=theme.font("Georgia", fs, "bold italic"),
                        fill=ACCENT, anchor="w")
 
     i_width = int(fs * 0.38)
     canvas.create_text(wx + r_width + i_width, wy,
                        text="MS",
-                       font=("Georgia", fs, "bold"),
+                       font=theme.font("Georgia", fs, "bold"),
                        fill=TEXT, anchor="w")
 
     # Accent underline
@@ -142,7 +135,7 @@ def draw_logo(canvas, x=0, y=0, scale=1.0):
     sub_fs = max(7, int(8 * scale))
     canvas.create_text(wx, oy + s(80),
                        text="RESIDENT INFORMATION MANAGEMENT SYSTEM",
-                       font=("Courier", sub_fs),
+                       font=theme.font("Courier", sub_fs),
                        fill=MUTED, anchor="w")
 
     # ── Bottom badge ──────────────────────────────────────────────
@@ -160,7 +153,7 @@ def draw_logo(canvas, x=0, y=0, scale=1.0):
                              fill=CARD, outline=BORDER, width=1)
     canvas.create_text(badge_x + s(79), badge_y + s(10),
                        text="BARANGAY EDITION  v1.0",
-                       font=("Courier", max(6, int(7*scale))),
+                       font=theme.font("Courier", max(6, int(7*scale))),
                        fill=ACCENT, anchor="center")
 
     # Palette dots
@@ -173,19 +166,23 @@ def draw_logo(canvas, x=0, y=0, scale=1.0):
     # Tagline
     canvas.create_text(badge_x + s(230), badge_y + s(10),
                        text="CLEAN · EFFICIENT · CONNECTED",
-                       font=("Courier", max(6, int(7*scale))),
+                       font=theme.font("Courier", max(6, int(7*scale))),
                        fill=BORDER, anchor="w")
 
 
-def make_logo_canvas(parent, scale=1.0, bg=BG):
+def make_logo_canvas(parent, scale=1.0, bg=None):
     """
     Creates a self-contained Canvas with the logo drawn on it.
     Returns the canvas — caller is responsible for pack/grid/place.
+    If bg is None, uses the current theme's BG color.
 
     Example:
         logo = make_logo_canvas(root, scale=1.0)
         logo.pack(pady=10)
     """
+    import theme as _t
+    if bg is None:
+        bg = _t.BG
     w = int(400 * scale)
     h = int(140 * scale)
     c = tk.Canvas(parent, width=w, height=h, bg=bg, highlightthickness=0)
@@ -195,25 +192,26 @@ def make_logo_canvas(parent, scale=1.0, bg=BG):
 
 # ── Demo / preview ────────────────────────────────────────────────
 if __name__ == "__main__":
+    import theme as _t
     root = tk.Tk()
     root.title("Logo Preview")
-    root.configure(bg=BG)
+    root.configure(bg=_t.BG)
     root.geometry("480x520")
 
-    tk.Label(root, text="scale = 1.0", font=("Courier", 9),
-             fg=MUTED, bg=BG).pack(pady=(16, 2))
+    tk.Label(root, text="scale = 1.0", font=_t.font("Courier", 9),
+             fg=_t.MUTED, bg=_t.BG).pack(pady=(16, 2))
     make_logo_canvas(root, scale=1.0).pack(padx=20)
 
-    tk.Frame(root, bg=BORDER, height=1).pack(fill="x", padx=20, pady=10)
+    tk.Frame(root, bg=_t.BORDER, height=1).pack(fill="x", padx=20, pady=10)
 
-    tk.Label(root, text="scale = 0.75", font=("Courier", 9),
-             fg=MUTED, bg=BG).pack(pady=(4, 2))
+    tk.Label(root, text="scale = 0.75", font=_t.font("Courier", 9),
+             fg=_t.MUTED, bg=_t.BG).pack(pady=(4, 2))
     make_logo_canvas(root, scale=0.75).pack(padx=20)
 
-    tk.Frame(root, bg=BORDER, height=1).pack(fill="x", padx=20, pady=10)
+    tk.Frame(root, bg=_t.BORDER, height=1).pack(fill="x", padx=20, pady=10)
 
-    tk.Label(root, text="scale = 0.55  (sidebar size)", font=("Courier", 9),
-             fg=MUTED, bg=BG).pack(pady=(4, 2))
+    tk.Label(root, text="scale = 0.55  (sidebar size)", font=_t.font("Courier", 9),
+             fg=_t.MUTED, bg=_t.BG).pack(pady=(4, 2))
     make_logo_canvas(root, scale=0.55).pack(padx=20)
 
     root.mainloop()

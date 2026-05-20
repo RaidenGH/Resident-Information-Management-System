@@ -2,6 +2,7 @@ import tkinter as tk
 from tkinter import ttk, messagebox
 import database
 import ui
+import users_database
 from logo import make_logo_canvas
 
 
@@ -234,34 +235,23 @@ PH_LOCATIONS = {
 }
 
 
-def run_purok_window():
+def run_purok_window(admin_username=None):
     database.create_purok_table()
 
-    # ── Palette ───────────────────────────────────────────────────────────────
-    BG      = "#0d0f14"
-    CARD    = "#13161e"
-    PANEL   = "#1a1e2b"
-    BORDER  = "#2a2f42"
-    ACCENT  = "#4f8ef7"
-    ACCENT2 = "#7c5cfc"
-    SUCCESS = "#4fc97e"
-    WARNING = "#f7c948"
-    DANGER  = "#ff5f5f"
-    TEXT    = "#e8ecf4"
-    MUTED   = "#6b7490"
+    import theme as _font
+    BG = _font.BG; CARD = _font.CARD; PANEL = _font.PANEL
+    BORDER = _font.BORDER; ACCENT = _font.ACCENT; ACCENT2 = _font.ACCENT2
+    SUCCESS = _font.SUCCESS; WARN = _font.WARN; DANGER = _font.DANGER
+    TEXT = _font.TEXT; MUTED = _font.MUTED
 
     # ── Root window ───────────────────────────────────────────────────────────
     root = tk.Tk()
     root.title("Purok Management")
     root.configure(bg=BG)
-    root.geometry("660x860")
-    root.minsize(560, 700)
+    root.attributes("-fullscreen", True)
     root.resizable(True, True)
-
-    root.update_idletasks()
-    x = (root.winfo_screenwidth()  - 660) // 2
-    y = (root.winfo_screenheight() - 860) // 2
-    root.geometry(f"660x860+{x}+{y}")
+    # Press Escape to exit fullscreen
+    root.bind("<Escape>", lambda e: root.attributes("-fullscreen", False))
 
     root.grid_rowconfigure(0, weight=1)
     root.grid_columnconfigure(0, weight=1)
@@ -269,23 +259,81 @@ def run_purok_window():
     # ── Outer wrapper ─────────────────────────────────────────────────────────
     wrapper = tk.Frame(root, bg=BG)
     wrapper.grid(row=0, column=0, sticky="nsew")
-    wrapper.grid_rowconfigure(4, weight=1)   # treeview row expands
+    wrapper.grid_rowconfigure(5, weight=1)   # treeview row expands
     wrapper.grid_columnconfigure(0, weight=1)
+    wrapper.grid_rowconfigure(2, weight=0)
+    wrapper.grid_rowconfigure(4, weight=0)
+    wrapper.grid_rowconfigure(6, weight=0)
+    wrapper.grid_rowconfigure(7, weight=0)
+    wrapper.grid_rowconfigure(8, weight=0)
+    wrapper.grid_rowconfigure(10, weight=0)
+
+    # ── Titlebar ────────────────────────────────────────────────
+    titlebar = tk.Frame(wrapper, bg=CARD, height=34)
+    titlebar.grid(row=0, column=0, sticky="ew")
+    titlebar.pack_propagate(False)
+
+    tk.Label(titlebar, text="Purok Management  ·  v1.0",
+             font=_font.font("Courier", 9, "bold"), fg=MUTED, bg=CARD).pack(side="left", padx=14)
+
+    # Drag to move
+    def _tb_drag_start(e): root._dx, root._dy = e.x_root, e.y_root
+    def _tb_drag_move(e):
+        root.attributes("-fullscreen", False)
+        root.geometry(f"+{root.winfo_x()+e.x_root-root._dx}+{root.winfo_y()+e.y_root-root._dy}")
+        root._dx, root._dy = e.x_root, e.y_root
+    titlebar.bind("<ButtonPress-1>", _tb_drag_start)
+    titlebar.bind("<B1-Motion>",     _tb_drag_move)
+
+    # Window controls on the right
+    ctrl_frame = tk.Frame(titlebar, bg=CARD)
+    ctrl_frame.pack(side="right", padx=(0, 6), pady=4)
+
+    def _minimize():
+        root.attributes("-fullscreen", False)
+        root.state("iconic")
+
+    # ── Fullscreen toggle helper (defined before use) ────────
+    _fs_saved = {"geo": None}
+    def _toggle_fullscreen():
+        is_fs = root.attributes("-fullscreen")
+        if is_fs:
+            root.attributes("-fullscreen", False)
+            if _fs_saved["geo"]:
+                root.geometry(_fs_saved["geo"])
+            else:
+                root.geometry("960x800")
+                x = (root.winfo_screenwidth() - 960) // 2
+                y = (root.winfo_screenheight() - 800) // 2
+                root.geometry(f"960x800+{x}+{y}")
+        else:
+            _fs_saved["geo"] = root.geometry()
+            root.attributes("-fullscreen", True)
+
+    for sym, cmd, hov in [("🗖", _toggle_fullscreen, BORDER),
+                           ("─", _minimize, BORDER),
+                           ("✕", lambda: root.destroy(), DANGER)]:
+        b = tk.Button(ctrl_frame, text=sym, command=cmd,
+                      bg=CARD, fg=MUTED,
+                      activebackground=hov, activeforeground=TEXT,
+                      font=_font.font("Courier", 10), relief="flat", bd=0,
+                      cursor="hand2", width=3)
+        b.pack(side="left", ipady=1)
 
     # Top accent stripe
-    tk.Frame(wrapper, bg=ACCENT, height=3).grid(row=0, column=0, sticky="ew")
+    tk.Frame(wrapper, bg=ACCENT, height=3).grid(row=1, column=0, sticky="ew")
 
     # Logo
     logo_canvas = make_logo_canvas(wrapper, scale=0.75, bg=BG)
-    logo_canvas.grid(row=1, column=0, sticky="w", padx=26, pady=(16, 0))
+    logo_canvas.grid(row=2, column=0, sticky="w", padx=36, pady=(20, 0))
 
     # Separator
     tk.Frame(wrapper, bg=BORDER, height=1).grid(
-        row=2, column=0, sticky="ew", padx=26, pady=(12, 0))
+        row=3, column=0, sticky="ew", padx=36, pady=(14, 0))
 
     # ── Header ────────────────────────────────────────────────────────────────
     header = tk.Frame(wrapper, bg=BG)
-    header.grid(row=3, column=0, sticky="ew", padx=26, pady=(16, 10))
+    header.grid(row=4, column=0, sticky="ew", padx=36, pady=(16, 10))
     header.grid_columnconfigure(1, weight=1)
 
     dot_c = tk.Canvas(header, width=28, height=28, bg=BG, highlightthickness=0)
@@ -297,40 +345,112 @@ def run_purok_window():
     title_f = tk.Frame(header, bg=BG)
     title_f.grid(row=0, column=1, sticky="w")
     tk.Label(title_f, text="Purok",
-             font=("Georgia", 22, "bold"), fg=TEXT, bg=BG).pack(side="left")
+             font=_font.font("Georgia", 22, "bold"), fg=TEXT, bg=BG).pack(side="left")
     tk.Label(title_f, text=" Management",
-             font=("Georgia", 22, "italic"), fg=ACCENT, bg=BG).pack(side="left")
+             font=_font.font("Georgia", 22, "italic"), fg=ACCENT, bg=BG).pack(side="left")
     tk.Label(header,
              text="Select a purok to view its residents",
-             font=("Courier", 8), fg=MUTED, bg=BG).grid(row=1, column=1, sticky="w")
+             font=_font.font("Courier", 8), fg=MUTED, bg=BG).grid(row=1, column=1, sticky="w")
+
+    # ── Admin Panel button (top right) — only for admins ─────────
+    if admin_username and users_database.can_access_admin_panel(admin_username):
+        def _open_admin_from_purok():
+            # Verify password via popup
+            pw_win = tk.Toplevel(root)
+            pw_win.title("Confirm Access")
+            pw_win.configure(bg=CARD)
+            pw_win.geometry("320x180")
+            pw_win.resizable(False, False)
+            pw_win.grab_set()
+            pw_win.transient(root)
+            sw, sh = pw_win.winfo_screenwidth(), pw_win.winfo_screenheight()
+            pw_win.geometry(f"320x180+{(sw-320)//2}+{(sh-180)//2}")
+
+            tk.Label(pw_win, text="Enter your password to continue:",
+                     font=_font.font("Courier", 9, "bold"),
+                     fg=TEXT, bg=CARD).pack(pady=(16, 8))
+
+            pw_entry_wrap = tk.Frame(pw_win, bg=PANEL,
+                                      highlightthickness=1, highlightbackground=BORDER)
+            pw_entry_wrap.pack(padx=20, fill="x")
+            pw_entry = tk.Entry(pw_entry_wrap, bg=PANEL, fg=TEXT,
+                                font=_font.font("Courier", 11), show="●",
+                                relief="flat", insertbackground=ACCENT, bd=0)
+            pw_entry.pack(fill="x", padx=8, pady=6)
+            pw_entry.focus_set()
+
+            def _confirm_pw():
+                p = pw_entry.get().strip()
+                if not users_database.validate_login(admin_username, p):
+                    messagebox.showerror("Access Denied", "Incorrect password.")
+                    return
+                pw_win.destroy()
+                import admin_panel
+                admin_panel.run_admin_panel(admin_username, lambda: None)
+
+            pw_entry.bind("<Return>", lambda e: _confirm_pw())
+            btn_row = tk.Frame(pw_win, bg=CARD)
+            btn_row.pack(fill="x", padx=20, pady=(12, 0))
+            tk.Button(btn_row, text="✓  Confirm", command=_confirm_pw,
+                      bg=ACCENT, fg="white",
+                      font=_font.font("Courier", 9, "bold"),
+                      relief="flat", bd=0, cursor="hand2",
+                      padx=14, pady=5).pack(side="left", padx=(0, 6))
+            tk.Button(btn_row, text="✕  Cancel", command=pw_win.destroy,
+                      bg=DANGER, fg="white",
+                      font=_font.font("Courier", 9, "bold"),
+                      relief="flat", bd=0, cursor="hand2",
+                      padx=14, pady=5).pack(side="left")
+
+        # Admin Panel tab button — top right of header
+        admin_tab_outer = tk.Frame(header, bg="#1a1030",
+                                    highlightthickness=1, highlightbackground=ACCENT2)
+        admin_tab_outer.grid(row=0, column=2, rowspan=2, sticky="ne", padx=(12, 0))
+        admin_tab_btn = tk.Button(admin_tab_outer, text="⚙  ADMIN",
+                                   command=_open_admin_from_purok,
+                                   bg="#140b24", fg=ACCENT2,
+                                   activebackground="#2a1a4a", activeforeground="#b090ff",
+                                   font=_font.font("Courier", 8, "bold"),
+                                   relief="flat", bd=0, cursor="hand2",
+                                   padx=10, pady=4)
+        admin_tab_btn.pack()
+        def _ad_in(e):
+            admin_tab_outer.config(highlightbackground="#b090ff")
+            admin_tab_btn.config(fg="#c8aaff")
+        def _ad_out(e):
+            admin_tab_outer.config(highlightbackground=ACCENT2)
+            admin_tab_btn.config(fg=ACCENT2)
+        admin_tab_btn.bind("<Enter>", _ad_in)
+        admin_tab_btn.bind("<Leave>", _ad_out)
 
     # ── Treeview card ─────────────────────────────────────────────────────────
     tree_card = tk.Frame(wrapper, bg=CARD,
                          highlightthickness=1, highlightbackground=BORDER)
-    tree_card.grid(row=4, column=0, sticky="nsew", padx=26, pady=(0, 10))
+    tree_card.grid(row=5, column=0, sticky="nsew", padx=36, pady=(0, 10))
     tree_card.grid_rowconfigure(3, weight=1)
     tree_card.grid_columnconfigure(0, weight=1)
+    tree_card.grid_columnconfigure(1, weight=0)
 
     card_hdr = tk.Frame(tree_card, bg=CARD)
     card_hdr.grid(row=0, column=0, columnspan=2, sticky="ew", padx=16, pady=(12, 6))
     card_hdr.grid_columnconfigure(1, weight=1)
 
     tk.Label(card_hdr, text="▸ PUROK LIST",
-             font=("Courier", 8, "bold"), fg=ACCENT, bg=CARD).grid(
+             font=_font.font("Courier", 8, "bold"), fg=ACCENT, bg=CARD).grid(
                  row=0, column=0, sticky="w")
     count_lbl = tk.Label(card_hdr, text="0 entries",
-                         font=("Courier", 8), fg=MUTED, bg=CARD)
+                         font=_font.font("Courier", 8), fg=MUTED, bg=CARD)
     count_lbl.grid(row=0, column=1, sticky="e")
 
     # ── Search / Filter bar ───────────────────────────────────────────────────
     search_frame = tk.Frame(tree_card, bg=CARD)
     search_frame.grid(row=1, column=0, columnspan=2, sticky="ew",
-                      padx=16, pady=(0, 8))
+                      padx=20, pady=(0, 8))
     search_frame.grid_columnconfigure(0, weight=1)
 
     # Magnifying-glass icon label
     search_icon = tk.Label(search_frame, text="🔍",
-                           font=("Segoe UI", 11), fg=MUTED, bg=CARD)
+                           font=_font.font("Segoe UI", 11), fg=MUTED, bg=CARD)
     search_icon.grid(row=0, column=0, sticky="w", padx=(0, 6))
 
     search_entry_wrap = tk.Frame(search_frame, bg=PANEL,
@@ -341,7 +461,7 @@ def run_purok_window():
     search_entry = tk.Entry(search_entry_wrap,
                             textvariable=search_var,
                             bg=PANEL, fg=TEXT,
-                            font=("Courier", 10), relief="flat",
+                            font=_font.font("Courier", 10), relief="flat",
                             insertbackground=ACCENT, bd=0)
     search_entry.pack(fill="x", padx=10, pady=6)
     search_entry.bind("<FocusIn>",
@@ -355,7 +475,7 @@ def run_purok_window():
         filter_puroks()
 
     clear_btn = tk.Button(search_frame, text="✕",
-                          font=("Courier", 9, "bold"),
+                          font=_font.font("Courier", 9, "bold"),
                           bg=PANEL, fg=MUTED,
                           activebackground=BORDER, activeforeground=TEXT,
                           relief="flat", bd=0, cursor="hand2",
@@ -365,7 +485,7 @@ def run_purok_window():
     # Hint label below search
     hint_lbl = tk.Label(tree_card,
                         text="Type to filter by name, province, city, or barangay",
-                        font=("Courier", 7), fg=MUTED, bg=CARD)
+                        font=_font.font("Courier", 7), fg=MUTED, bg=CARD)
     hint_lbl.grid(row=2, column=0, columnspan=2, sticky="w", padx=16, pady=(0, 6))
 
     # ttk style
@@ -373,10 +493,10 @@ def run_purok_window():
     style.theme_use("clam")
     style.configure("Custom.Treeview",
                     background=PANEL, foreground=TEXT, fieldbackground=PANEL,
-                    borderwidth=0, font=("Courier", 10), rowheight=34)
+                    borderwidth=0, font=_font.font("Courier", 10), rowheight=38)
     style.configure("Custom.Treeview.Heading",
                     background=CARD, foreground=ACCENT,
-                    font=("Courier", 9, "bold"), borderwidth=0, relief="flat")
+                    font=_font.font("Courier", 9, "bold"), borderwidth=0, relief="flat")
     style.map("Custom.Treeview",
               background=[("selected", ACCENT)], foreground=[("selected", "white")])
     style.map("Custom.Treeview.Heading", background=[("active", PANEL)])
@@ -407,20 +527,28 @@ def run_purok_window():
     tree.heading("Province", text="Province")
     tree.heading("City",     text="City / Municipality")
     tree.heading("Barangay", text="Barangay")
-    tree.column("ID",       width=40,  anchor="center", stretch=False)
-    tree.column("Name",     width=120, anchor="w",      stretch=True)
-    tree.column("Province", width=130, anchor="w",      stretch=True)
-    tree.column("City",     width=120, anchor="w",      stretch=True)
-    tree.column("Barangay", width=130, anchor="w",      stretch=True)
+    tree.column("ID",       width=60,  minwidth=40,  anchor="center", stretch=False)
+    tree.column("Name",     width=200, minwidth=120, anchor="w",      stretch=True)
+    tree.column("Province", width=220, minwidth=120, anchor="w",      stretch=True)
+    tree.column("City",     width=200, minwidth=120, anchor="w",      stretch=True)
+    tree.column("Barangay", width=240, minwidth=130, anchor="w",      stretch=True)
     tree.grid(row=3, column=0, sticky="nsew", padx=(10, 0), pady=(0, 10))
     tree_scroll.config(command=tree.yview)
+    # Compute theme-aware alternating row colors
+    cur_theme = _font.get_current_theme()
+    if cur_theme == "light":
+        even_bg = "#e0e3ec"
+    elif cur_theme == "forest":
+        even_bg = "#182818"
+    else:
+        even_bg = "#161a26"
     tree.tag_configure("odd",  background=PANEL)
-    tree.tag_configure("even", background="#161a26")
+    tree.tag_configure("even", background=even_bg)
 
     # ── Add Purok card ────────────────────────────────────────────────────────
     add_card = tk.Frame(wrapper, bg=CARD,
                         highlightthickness=1, highlightbackground=BORDER)
-    add_card.grid(row=5, column=0, sticky="ew", padx=26, pady=(0, 10))
+    add_card.grid(row=6, column=0, sticky="ew", padx=36, pady=(0, 10))
     add_card.grid_columnconfigure(0, weight=1)
 
     # Card title + collapse toggle
@@ -428,7 +556,7 @@ def run_purok_window():
     add_hdr.grid(row=0, column=0, sticky="ew", padx=16, pady=(12, 0))
     add_hdr.grid_columnconfigure(0, weight=1)
     tk.Label(add_hdr, text="▸ ADD NEW PUROK",
-             font=("Courier", 8, "bold"), fg=ACCENT, bg=CARD).grid(
+             font=_font.font("Courier", 8, "bold"), fg=ACCENT, bg=CARD).grid(
                  row=0, column=0, sticky="w")
 
     # ── Location selection area ───────────────────────────────────────────────
@@ -438,7 +566,7 @@ def run_purok_window():
 
     def make_label(parent, text, col):
         tk.Label(parent, text=text,
-                 font=("Courier", 7, "bold"),
+                 font=_font.font("Courier", 7, "bold"),
                  fg=MUTED, bg=CARD).grid(row=0, column=col, sticky="w", padx=(0, 6))
 
     make_label(loc_frame, "REGION",  0)
@@ -457,7 +585,7 @@ def run_purok_window():
         wrap.grid(row=1, column=col, sticky="ew", padx=(0, 6), pady=(4, 0))
         cb = ttk.Combobox(wrap, textvariable=textvariable,
                           state="readonly", style="Loc.TCombobox",
-                          font=("Courier", 9))
+                          font=_font.font("Courier", 9))
         cb.pack(fill="x", padx=6, pady=5)
         cb.bind("<FocusIn>",  lambda e: wrap.config(highlightbackground=ACCENT))
         cb.bind("<FocusOut>", lambda e: wrap.config(highlightbackground=BORDER))
@@ -476,7 +604,7 @@ def run_purok_window():
     # Location badge (shows chosen summary)
     badge_var = tk.StringVar(value="")
     badge_lbl = tk.Label(loc_frame, textvariable=badge_var,
-                         font=("Courier", 8), fg=SUCCESS, bg=CARD,
+                         font=_font.font("Courier", 8), fg=SUCCESS, bg=CARD,
                          anchor="w")
     badge_lbl.grid(row=2, column=0, columnspan=4, sticky="w", pady=(5, 0))
 
@@ -540,7 +668,7 @@ def run_purok_window():
     input_row.grid_columnconfigure(0, weight=1)
 
     tk.Label(input_row, text="PUROK NAME",
-             font=("Courier", 7, "bold"), fg=MUTED, bg=CARD).grid(
+             font=_font.font("Courier", 7, "bold"), fg=MUTED, bg=CARD).grid(
                  row=0, column=0, sticky="w", pady=(0, 4))
 
     name_input_row = tk.Frame(input_row, bg=CARD)
@@ -552,7 +680,7 @@ def run_purok_window():
     entry_wrap.grid(row=0, column=0, sticky="ew", padx=(0, 8))
 
     purok_entry = tk.Entry(entry_wrap, bg=PANEL, fg=TEXT,
-                           font=("Courier", 10), relief="flat",
+                           font=_font.font("Courier", 10), relief="flat",
                            insertbackground=ACCENT, bd=0)
     purok_entry.pack(fill="x", padx=10, pady=7)
 
@@ -562,7 +690,7 @@ def run_purok_window():
     purok_entry.bind("<FocusOut>", _entry_fo)
 
     add_btn = tk.Button(name_input_row, text="+ Add",
-                        font=("Courier", 9, "bold"),
+                        font=_font.font("Courier", 9, "bold"),
                         bg=ACCENT, fg="white",
                         activebackground="#3a7ce8", activeforeground="white",
                         relief="flat", bd=0, cursor="hand2")
@@ -571,11 +699,11 @@ def run_purok_window():
     # ── Open Residents button ─────────────────────────────────────────────────
     open_btn = tk.Button(wrapper,
                          text="OPEN RESIDENTS  →",
-                         font=("Courier", 10, "bold"),
+                         font=_font.font("Courier", 12, "bold"),
                          bg=SUCCESS, fg="#0d0f14",
                          activebackground="#3ab868", activeforeground="#0d0f14",
                          relief="flat", bd=0, cursor="hand2")
-    open_btn.grid(row=6, column=0, sticky="ew", padx=26, pady=(0, 6), ipady=11)
+    open_btn.grid(row=7, column=0, sticky="ew", padx=36, pady=(0, 8), ipady=14)
 
     # ── Archived Puroks collapsible panel ─────────────────────────────────────
     archive_panel_visible = tk.BooleanVar(value=False)
@@ -583,13 +711,13 @@ def run_purok_window():
     archive_toggle_btn = tk.Button(
         wrapper,
         text="📦  Show Archived Puroks  ▾",
-        font=("Courier", 8, "bold"),
-        bg=PANEL, fg=WARNING,
-        activebackground=BORDER, activeforeground=WARNING,
+        font=_font.font("Courier", 8, "bold"),
+        bg=PANEL, fg=WARN,
+        activebackground=BORDER, activeforeground=WARN,
         relief="flat", bd=0, cursor="hand2",
         anchor="w"
     )
-    archive_toggle_btn.grid(row=7, column=0, sticky="ew", padx=26, pady=(0, 4), ipady=5)
+    archive_toggle_btn.grid(row=8, column=0, sticky="ew", padx=36, pady=(0, 4), ipady=5)
 
     # The collapsible card — hidden by default
     arch_card = tk.Frame(wrapper, bg=CARD,
@@ -600,10 +728,10 @@ def run_purok_window():
     arch_hdr.grid(row=0, column=0, columnspan=2, sticky="ew", padx=16, pady=(10, 6))
     arch_hdr.grid_columnconfigure(1, weight=1)
     tk.Label(arch_hdr, text="📦  ARCHIVED PUROKS",
-             font=("Courier", 8, "bold"), fg=WARNING, bg=CARD).grid(
+             font=_font.font("Courier", 8, "bold"), fg=WARN, bg=CARD).grid(
                  row=0, column=0, sticky="w")
     arch_count_lbl = tk.Label(arch_hdr, text="0 archived",
-                               font=("Courier", 8), fg=MUTED, bg=CARD)
+                               font=_font.font("Courier", 8), fg=MUTED, bg=CARD)
     arch_count_lbl.grid(row=0, column=1, sticky="e")
 
     arch_scroll = tk.Scrollbar(arch_card, orient="vertical",
@@ -629,18 +757,28 @@ def run_purok_window():
     arch_tree.column("Barangay", width=120, anchor="w",      stretch=True)
     arch_tree.grid(row=1, column=0, sticky="nsew", padx=(10, 0), pady=(0, 8))
     arch_scroll.config(command=arch_tree.yview)
-    arch_tree.tag_configure("arch_odd",  background="#1a1408")
-    arch_tree.tag_configure("arch_even", background="#141008")
+    # Archive row colors (theme-aware)
+    if cur_theme == "light":
+        arch_odd  = "#f0e8d0"
+        arch_even = "#e8e0c0"
+    elif cur_theme == "forest":
+        arch_odd  = "#1a2c1a"
+        arch_even = "#152415"
+    else:
+        arch_odd  = "#1a1408"
+        arch_even = "#141008"
+    arch_tree.tag_configure("arch_odd",  background=arch_odd)
+    arch_tree.tag_configure("arch_even", background=arch_even)
 
     tk.Label(arch_card,
              text="Right-click a row to Restore or Delete permanently",
-             font=("Courier", 7), fg=MUTED, bg=CARD).grid(
+             font=_font.font("Courier", 7), fg=MUTED, bg=CARD).grid(
                  row=2, column=0, columnspan=2, pady=(0, 10))
 
     # Footer
     tk.Label(wrapper,
              text="© Barangay Management System  ·  v1.0",
-             font=("Courier", 7), fg=BORDER, bg=BG).grid(row=9, column=0, pady=(2, 10))
+             font=_font.font("Courier", 8), fg=BORDER, bg=BG).grid(row=10, column=0, pady=(6, 14))
 
     # ── Logic ─────────────────────────────────────────────────────────────────
     _all_puroks_cache = []
@@ -690,7 +828,7 @@ def run_purok_window():
             archive_panel_visible.set(False)
             archive_toggle_btn.config(text="📦  Show Archived Puroks  ▾")
         else:
-            arch_card.grid(row=8, column=0, sticky="ew", padx=26, pady=(0, 8))
+            arch_card.grid(row=9, column=0, sticky="ew", padx=36, pady=(0, 8))
             archive_panel_visible.set(True)
             archive_toggle_btn.config(text="📦  Hide Archived Puroks  ▴")
             refresh_archived()
@@ -701,7 +839,7 @@ def run_purok_window():
     arch_ctx = tk.Menu(root, tearoff=0,
                        bg=CARD, fg=TEXT,
                        activebackground=ACCENT, activeforeground="white",
-                       font=("Courier", 9), relief="flat", bd=0)
+                       font=_font.font("Courier", 9), relief="flat", bd=0)
     arch_ctx.add_command(label="♻  Restore Purok", foreground=SUCCESS,
                          activebackground="#0d3320", activeforeground=SUCCESS,
                          command=lambda: _arch_restore())
@@ -822,13 +960,13 @@ def run_purok_window():
         purok_id   = tree.item(selected[0])["values"][0]
         purok_name = tree.item(selected[0])["values"][1]
         root.destroy()
-        ui.run_app(purok_id, purok_name)
+        ui.run_app(purok_id, purok_name, admin_username=admin_username)
 
     # ── Right-click context menu ───────────────────────────────────────────────
     ctx_menu = tk.Menu(root, tearoff=0,
                        bg=CARD, fg=TEXT,
                        activebackground=ACCENT, activeforeground="white",
-                       font=("Courier", 9),
+                       font=_font.font("Courier", 9),
                        relief="flat", bd=0)
 
     # Separator style
@@ -836,8 +974,8 @@ def run_purok_window():
                          activebackground="#7a1e1e", activeforeground="#ff5f5f",
                          command=lambda: _ctx_delete())
     ctx_menu.add_separator()
-    ctx_menu.add_command(label="📦  Archive Purok", foreground=WARNING,
-                         activebackground="#4a3a00", activeforeground=WARNING,
+    ctx_menu.add_command(label="📦  Archive Purok", foreground=WARN,
+                         activebackground="#4a3a00", activeforeground=WARN,
                          command=lambda: _ctx_archive())
 
     _ctx_target = {"iid": None}   # holds the row that was right-clicked
