@@ -224,7 +224,7 @@ The application will launch showing the **Login** screen. Databases are created 
 
 1. **Launch the app** — The login screen appears with a dashboard on the right
 2. **Create an account** — Click "Create Account →" below the login form
-3. **Enter registration code** — Default code is `RIMS-2024` (can be changed in Admin Panel)
+3. **Enter registration code** — Default code is `RIMS-2026` (can be changed in Admin Panel)
 4. **Select a role** — Choose your role (e.g., Admin, Barangay Official)
 5. **First admin auto-approved** — The first Admin/Barangay Official to register is automatically approved
 6. **Log in** — Use your new credentials to sign in
